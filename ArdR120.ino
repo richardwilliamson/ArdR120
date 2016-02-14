@@ -7,11 +7,13 @@
 //top left key 48, bottom right 92 (top>bottom, left to right)
 //1=64
 
-#include "ArdR120.h"
-#include "OSC.h"
+
 
 #include <OSCMessage.h>
 #include <ESP8266WiFi.h>
+
+#include "ArdR120.h"
+#include "OSC.h"
 #include "BufferStore.h"
 
 //display characters
@@ -28,9 +30,6 @@
 //24 makes next chars flash
 //25 makes previous chars flash
 //26 stops all flashing
-
-
-
 
 
 int status = WL_IDLE_STATUS;
@@ -156,7 +155,7 @@ void loop() {
   {
     //Serial.println("A");
     Buttons a = (Buttons)(Serial.read()-BUTTON_OFFSET);
-    sendCmd(a);
+    interpretCmd(a);
     //Serial.print(a);
     //yield();
   }
@@ -180,134 +179,256 @@ void loop() {
   //delay(10); //keeps ESP happy
 }
 
-void sendCmd(Buttons key)
+long lastAtAtPress = 0; //used to log the last time AtAt was pressed
+int atAtTimeout = 1000; //millis that we will wait for AtAt to be pressed
+
+void interpretCmd(Buttons key)
 {
-    //key = (buttons)((int)key - BUTTON_OFFSET);
-    char *cmd;
+
+    if (lastAtAtPress>0)
+      if(millis() - lastAtAtPress  < atAtTimeout)
+      { //we are in AtAtMode
+          interpretAtAtCmd(key);  //interpret it
+          lastAtAtPress = 0;  //reset the counter
+          return; //don't do anything else
+      } else
+          lastAtAtPress = 0;
     
+    //key = (buttons)((int)key - BUTTON_OFFSET);    
     switch (key)
     {
+      case BTN_ATT:
+      {
+        lastAtAtPress = millis();
+        //TODO - Display something to show atAtt pressed on screen
+        
+        return;
+      }
       case BTN_1:
       {
-        cmd = "1";
+        sendCmd("1");
         break;
       }
       case BTN_2:
       {
-        cmd = "2";
+        sendCmd("2");
         break;
       }
       case BTN_3:
       {
-        cmd = "3";
+        sendCmd("3");
         break;
       }
       case BTN_4:
       {
-        cmd= "4";
+        sendCmd("4");
         break;
       }
       case BTN_5:
       {
-         cmd= "5";
+         sendCmd("5");
          break;
       }
       case BTN_6:
       {
-         cmd= "6";
+         sendCmd("6");
          break;
       }
       case BTN_7:
       {
-         cmd= "7";
+         sendCmd("7");
          break;
       }
       case BTN_8:
       {
-         cmd= "8";
+         sendCmd("8");
          break;
       }
       case BTN_9:
       {
-         cmd= "9";
+         sendCmd("9");
          break;
       }
       case BTN_0:
       {
-         cmd= "0";
+         sendCmd("0");
          break;
       }
       case BTN_AT:
       {
-        cmd = "@";
+        sendCmd("@");
         break;
       }
       case BTN_ENTER:
       {
-        cmd = "#";
+        sendKey("ENTER"); //send this as a key not a command
         break;
       }
       case BTN_CLR:
       {
-        cmd = "clear_cmd";
+        sendCmd("clear_cmd");
         break;
       }
       case BTN_THRU:
       {
-        cmd = "Thru";
+        sendCmd("Thru");
         break;
       }
       case BTN_PLUS:
       {
-        cmd = "+";
+        sendCmd("+");
         break;
       }
       case BTN_MINUS:
       {
-        cmd = "-";
+        sendCmd("-");
         break;
       }
       case BTN_CUE:
       {
-        cmd = "Cue";
+        sendCmd("Cue");
         break;
       }
       case BTN_GRP:
       {
-        cmd = "Group";
+        sendCmd("Group");
         break;
       }
       case BTN_GO:
       {
-        cmd = "Go_To_Cue";
+        sendKey("go");
         break;
       }
+      case BTN_STOP_BACK:
+        sendKey("stopback");
+        break;
       case BTN_REM_DIM:
-      {
-        cmd = "Rem_Dim";
+        sendCmd("Rem_Dim");
         break;
-      }
       case BTN_FULL:
       {
-        cmd = "Full";
+        sendCmd("Full");
         break;
       }
       case BTN_ON:
       {
-        cmd = "On";
+        sendCmd("Level");
         break;
       }
+      case BTN_REC:
+         sendCmd("Record");
+         break;
+      case BTN_MACRO:
+         sendKey("Macro");
+         break;
+      case BTN_NEXT:
+         sendKey("Next");
+         break;
+      case BTN_LAST:
+         sendKey("Last");
+         break;
+      case BTN_UP:
+         sendKey("+%");
+         break;
+      case BTN_DOWN:
+         sendKey("-%");
+         break;
       default:
       {
         return; //do nothing with it
       }
     }
+}
 
-    OSCMessage msg("/eos/cmd");
+void interpretAtAtCmd(Buttons key)
+{
+    //these are the shift-commands
+    switch(key)
+    {
+       case BTN_CLR:
+       {  
+          OSCMessage msg("/eos/newcmd");
+          sendOSCMessage(msg);
+          break;
+       }
+       case BTN_GO:
+          sendCmd("Go_To_Cue");
+          break;
+       case BTN_0:
+          sendCmd("Sneak");
+          break;
+       case BTN_1:
+          sendCmd("Preset");
+          break;
+       case BTN_2:
+          sendCmd("Intensity_Palette");
+          break;
+       case BTN_3:
+          sendCmd("Focus_Palette");
+          break;
+       case BTN_4:
+          sendCmd("Color_Palette");
+          break;
+       case BTN_5:
+          sendCmd("Beam_Palette");
+          break;
+       case BTN_REC:
+          sendCmd("Update");
+          break;
+       case BTN_AT:
+          sendCmd("Address");
+          break;
+       case BTN_PLUS:
+          sendCmd("Park");
+          break;
+       default:
+       {
+          return; //do nothing
+       }
+    }
+}
+
+//TODO add in option to /eos/user/XX/...
+byte user = 255;
+
+void getUserString(String &str)
+{
+    str += "/eos/";
+    if (user<255) //255 means use desk's current user
+    {
+       str +="/user/";
+       str +=user;
+       str +="/";
+    }
+       
+}
+
+void sendCmd(char cmd[])
+{
+    String cmdString = "";
+    getUserString(cmdString);
+    cmdString +="cmd";
+
+    char cstr[cmdString.length()+1];
+    cmdString.toCharArray(cstr, cmdString.length()+1);
+    
+    OSCMessage msg(cstr);
     msg.add(cmd);
 
     sendOSCMessage(msg);
+}
 
+void sendKey(char key[])
+{
+    String str = "";
+    getUserString(str);
+    str += "key/";
+    str += xx§key;
+    char cstr[str.length()+1];
+
+    str.toCharArray(cstr, str.length()+1);
+    OSCMessage msg(cstr);
+    sendOSCMessage(msg);
 }
 
 

@@ -66,7 +66,12 @@ bool updateScreen = false;
 
 
 void checkForIncomingTCP();
-void sendCmd(Buttons key);
+
+void interpretCmd(Buttons key);
+void interpretAtAtCmd(Buttons key);
+
+void sendCmd(char cmd[]);
+void sendKey(char key[]);
 
 #endif
 
