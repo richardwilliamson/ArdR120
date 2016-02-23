@@ -1,11 +1,25 @@
 #ifndef ArdR120_h
 #define ArdR120_h
-#include "OSCMessage.h";
+#include "OSCMessage.h"
+#include "EosOscManager.h"
+#include "EosOscCommand.h"
+
+#include <ESP8266WiFi.h>
+
+EosOscManager oscManager;
+EosOscCommand oscCommand;
+
+WiFiClient client;
+
 union MsgLength   //this means I can acces the bytes and the long value for a 4 didgit int (long)
 {
   unsigned long value;
   byte bytes[4];
 };
+
+
+
+
 
 //note buttons go top down on R120 (stage electrics is different)
 //first button is actually 48
@@ -61,9 +75,6 @@ enum Buttons {
 
 char channelInfo[30];
 char commandInfo[30];
-
-bool updateScreen = false;
-
 
 void checkForIncomingTCP();
 

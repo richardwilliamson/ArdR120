@@ -10,10 +10,8 @@
 
 
 #include <OSCMessage.h>
-#include <ESP8266WiFi.h>
 
 #include "ArdR120.h"
-#include "OSC.h"
 #include "BufferStore.h"
 
 //display characters
@@ -45,7 +43,7 @@ IPAddress inIp(192, 168, 1, 200);
 IPAddress gateway(192, 168, 1, 1);
 IPAddress subnet(255, 255, 255, 0);
 
-WiFiClient client;
+
 
 boolean doConnect(bool verbose)
 {
@@ -63,14 +61,14 @@ boolean doConnect(bool verbose)
    if (WiFi.status() != WL_CONNECTED)
    {
      Serial.write(SND_CLEAR);
-     Serial.print("Failed to connect to wifi network");
+     Serial.print("wifi failed:");
      SND_NEW_LINE;
      Serial.print(ssid);
      return false;
    }
    if (verbose)
    {
-      Serial.print("Connected to network");
+      Serial.print("Connected to:");
       SND_NEW_LINE;
       Serial.print(ssid);
    }
@@ -91,18 +89,23 @@ boolean doConnect(bool verbose)
    if (!client.connected())
    {
       Serial.write(SND_CLEAR);
-      Serial.print("Failed to connect to console");
+      Serial.print("Console failed:");
       SND_NEW_LINE;
       Serial.print(outIp);
       return false;
    }
 
+   if (tries) //since tries is not 0 we must not have been connected but now are!
+      oscManager.resetConnection(); //since we weren't connected and now are we should reset the connection to be safe
+
    if (verbose)
    {
-      Serial.print("Connected to console");
+      Serial.print("Console connected:");
       SND_NEW_LINE;
       Serial.print(outIp);
    }
+
+   return true;
 
   
 
@@ -115,7 +118,6 @@ void setup() {
 
   //  WiFi.begin(ssid);
 
-  
   // put your setup code here, to run once:
   Serial.begin(9600);
 
@@ -133,7 +135,12 @@ void setup() {
       }
       Serial.flush(); //empty the buffer so we ignore the input
   }
-      
+
+  oscManager = EosOscManager(5, client); //should set which user from settings..
+  oscCommand = EosOscCommand(&oscManager);
+
+  oscManager.registerHandler(&oscCommand);
+  
   delay(1000); //display message for a second before then trying to update screen
   
 
@@ -144,7 +151,7 @@ void loop() {
  // put your main code here, to run repeatedly:
   doConnect(false);
  
-  checkForIncomingTCP();
+  oscManager.checkForIncomingTCP();
   
   yield(); //alow background to run..
 
@@ -163,7 +170,7 @@ void loop() {
 
 
 //update screen if required
-  if (updateScreen)
+  if (oscManager.getScreenNeedsUpdate())
   {
     Serial.write(SND_CLEAR);
     
@@ -173,10 +180,10 @@ void loop() {
 
     Serial.write(commandInfo);
 
-    updateScreen = false;
+    oscManager.setScreenNeedsUpdate(false);
     
   }
-  //delay(10); //keeps ESP happy
+  //delay(10); //keeps ESP happy*/
 }
 
 long lastAtAtPress = 0; //used to log the last time AtAt was pressed
@@ -206,132 +213,132 @@ void interpretCmd(Buttons key)
       }
       case BTN_1:
       {
-        sendCmd("1");
+        oscCommand.sendCommand("1");
         break;
       }
       case BTN_2:
       {
-        sendCmd("2");
+        oscCommand.sendCommand("2");
         break;
       }
       case BTN_3:
       {
-        sendCmd("3");
+        oscCommand.sendCommand("3");
         break;
       }
       case BTN_4:
       {
-        sendCmd("4");
+        oscCommand.sendCommand("4");
         break;
       }
       case BTN_5:
       {
-         sendCmd("5");
+         oscCommand.sendCommand("5");
          break;
       }
       case BTN_6:
       {
-         sendCmd("6");
+         oscCommand.sendCommand("6");
          break;
       }
       case BTN_7:
       {
-         sendCmd("7");
+         oscCommand.sendCommand("7");
          break;
       }
       case BTN_8:
       {
-         sendCmd("8");
+         oscCommand.sendCommand("8");
          break;
       }
       case BTN_9:
       {
-         sendCmd("9");
+         oscCommand.sendCommand("9");
          break;
       }
       case BTN_0:
       {
-         sendCmd("0");
+         oscCommand.sendCommand("0");
          break;
       }
       case BTN_AT:
       {
-        sendCmd("@");
+        oscCommand.sendCommand("@");
         break;
       }
       case BTN_ENTER:
       {
-        sendKey("ENTER"); //send this as a key not a command
+        oscCommand.sendKey("ENTER"); //send this as a key not a command
         break;
       }
       case BTN_CLR:
       {
-        sendCmd("clear_cmd");
+        oscCommand.sendCommand("clear_cmd");
         break;
       }
       case BTN_THRU:
       {
-        sendCmd("Thru");
+        oscCommand.sendCommand("Thru");
         break;
       }
       case BTN_PLUS:
       {
-        sendCmd("+");
+        oscCommand.sendCommand("+");
         break;
       }
       case BTN_MINUS:
       {
-        sendCmd("-");
+        oscCommand.sendCommand("-");
         break;
       }
       case BTN_CUE:
       {
-        sendCmd("Cue");
+        oscCommand.sendCommand("Cue");
         break;
       }
       case BTN_GRP:
       {
-        sendCmd("Group");
+        oscCommand.sendCommand("Group");
         break;
       }
       case BTN_GO:
       {
-        sendKey("go");
+        oscCommand.sendKey("go");
         break;
       }
       case BTN_STOP_BACK:
-        sendKey("stopback");
+        oscCommand.sendKey("stopback");
         break;
       case BTN_REM_DIM:
-        sendCmd("Rem_Dim");
+        oscCommand.sendCommand("Rem_Dim");
         break;
       case BTN_FULL:
       {
-        sendCmd("Full");
+        oscCommand.sendCommand("Full");
         break;
       }
       case BTN_ON:
       {
-        sendCmd("Level");
+        oscCommand.sendCommand("Level");
         break;
       }
       case BTN_REC:
-         sendCmd("Record");
+         oscCommand.sendCommand("Record");
          break;
       case BTN_MACRO:
-         sendKey("Macro");
+         oscCommand.sendKey("Macro");
          break;
       case BTN_NEXT:
-         sendKey("Next");
+         oscCommand.sendKey("Next");
          break;
       case BTN_LAST:
-         sendKey("Last");
+         oscCommand.sendKey("Last");
          break;
       case BTN_UP:
-         sendKey("+%");
+         oscCommand.sendKey("+%");
          break;
       case BTN_DOWN:
-         sendKey("-%");
+         oscCommand.sendKey("-%");
          break;
       default:
       {
@@ -347,39 +354,38 @@ void interpretAtAtCmd(Buttons key)
     {
        case BTN_CLR:
        {  
-          OSCMessage msg("/eos/newcmd");
-          sendOSCMessage(msg);
+          oscCommand.sendNewCommand("");
           break;
        }
        case BTN_GO:
-          sendCmd("Go_To_Cue");
+          oscCommand.sendCommand("Go_To_Cue");
           break;
        case BTN_0:
-          sendCmd("Sneak");
+          oscCommand.sendCommand("Sneak");
           break;
        case BTN_1:
-          sendCmd("Preset");
+          oscCommand.sendCommand("Preset");
           break;
        case BTN_2:
-          sendCmd("Intensity_Palette");
+          oscCommand.sendCommand("Intensity_Palette");
           break;
        case BTN_3:
-          sendCmd("Focus_Palette");
+          oscCommand.sendCommand("Focus_Palette");
           break;
        case BTN_4:
-          sendCmd("Color_Palette");
+          oscCommand.sendCommand("Color_Palette");
           break;
        case BTN_5:
-          sendCmd("Beam_Palette");
+          oscCommand.sendCommand("Beam_Palette");
           break;
        case BTN_REC:
-          sendCmd("Update");
+          oscCommand.sendCommand("Update");
           break;
        case BTN_AT:
-          sendCmd("Address");
+          oscCommand.sendCommand("Address");
           break;
        case BTN_PLUS:
-          sendCmd("Park");
+          oscCommand.sendCommand("Park");
           break;
        default:
        {
@@ -388,47 +394,5 @@ void interpretAtAtCmd(Buttons key)
     }
 }
 
-//TODO add in option to /eos/user/XX/...
-byte user = 255;
-
-void getUserString(String &str)
-{
-    str += "/eos/";
-    if (user<255) //255 means use desk's current user
-    {
-       str +="/user/";
-       str +=user;
-       str +="/";
-    }
-       
-}
-
-void sendCmd(char cmd[])
-{
-    String cmdString = "";
-    getUserString(cmdString);
-    cmdString +="cmd";
-
-    char cstr[cmdString.length()+1];
-    cmdString.toCharArray(cstr, cmdString.length()+1);
-    
-    OSCMessage msg(cstr);
-    msg.add(cmd);
-
-    sendOSCMessage(msg);
-}
-
-void sendKey(char key[])
-{
-    String str = "";
-    getUserString(str);
-    str += "key/";
-    str += xx§key;
-    char cstr[str.length()+1];
-
-    str.toCharArray(cstr, str.length()+1);
-    OSCMessage msg(cstr);
-    sendOSCMessage(msg);
-}
 
 
