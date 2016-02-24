@@ -28,6 +28,14 @@ The are accepted:
 
 [@ATT][5] = Beam pallette
 
+[@ATT][6] = Live
+
+[@ATT][7] = Blind
+
+[@ATT][8] = Patch
+
+[@ATT][9] = Park
+
 [@ATT][Rec] = update
 
 [@ATT][@] = Address (for Stage Electrics remotes without a Dim key)
@@ -46,7 +54,7 @@ The are accepted:
 
 (NOT YET WORKING)
 
-Setup commands are accessed by pressing [@ATT][@ATT] (press it twice), followed by the option below, press [Rem Dim] at any time while in setup to exit without saving
+Setup commands are accessed by pressing [@ATT] - [@ATT] (press it twice), followed by the option below, press [Rem Dim] at any time while in setup to exit without saving
 
 Press [*] to confirm settings
 [up] and [down] will move left/right where applicable
@@ -62,15 +70,25 @@ Press [*] to confirm settings
 [@ATT] [5] = Select Wifi network (use up and down to cycle through), pressing [*] will take you to the password entry. 
 
 1, A, B, C, a, b, c
+
 2, D, E, F, d, e, f
+
 3, G, H, I, g, h, i
+
 4, J, K, L, j, k, l
+
 5, M, N, O, m, n, o
+
 6, P, Q, R, p, q, r
+
 7, S, T, U, s, t, u
+
 8, V, W, X, v, w, x
+
 9, Y, Z, y, z
+
 0
+
 . special chars
 
 
@@ -88,5 +106,4 @@ Press [*] to confirm settings
 - When recalling macros command line on remote doesn't show that you are typing a macro (as it doesn't appear on console command line)
 
 - Similarly STOPBACK and GO don't display - maybe need a mechanism to show "special" messages for a short duration
-"'
 
