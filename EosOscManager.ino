@@ -1,4 +1,5 @@
 #include "EosOscManager.h"
+#include "setupManager.h"
 
 EosOscManager::EosOscManager() 
 {
@@ -17,6 +18,7 @@ void EosOscManager::setUser(byte theUser)
     user=theUser;
     if (setHandler)
       handler->userChanged();
+      
 }
 
 byte EosOscManager::getUser()
@@ -56,13 +58,17 @@ void EosOscManager::routeOSC(OSCMessage &theMessage)
 
 void EosOscManager::sendOSCMessage(OSCMessage &message)
 {
-  //send out via TCP
-  BufferStore(buf); //declare a buffer to send to
 
-      //MsgLength mLen;
-
-  message.send(buf); //send to the buffer
-  buf.sendOut(client); //now transmit it en masse
+  if (client.connected())
+  {
+    //send out via TCP
+    BufferStore(buf); //declare a buffer to send to
+  
+        //MsgLength mLen;
+  
+    message.send(buf); //send to the buffer
+    buf.sendOut(client); //now transmit it en masse
+  }
 
   message.empty(); // free space occupied by message
 
@@ -85,17 +91,23 @@ void EosOscManager::setScreenNeedsUpdate(bool doesIt)
 
 void EosOscManager::checkForIncomingTCP()
 {
-  
+  if (!client.connected())
+  {
+    Serial.print("not connected");
+    return;
+  }
+    
   int rdS = 0;
 
   // read in the OSC From the client if we have it
-  if ((rdS = client.available()) > 0)
+  if ((rdS = client.available()) > 12) //must be more than 12 bytes available or we can't do anything
   {
     //Serial.println("Got stuff");
     MsgLength len;  //a struct for the length
     len.value = 0; //preset it to 0
 
     byte f4 = 4; //first 4 bytes are the size, then we have the actual message..
+        
     //get the size
     while (f4--)
     {
@@ -103,8 +115,13 @@ void EosOscManager::checkForIncomingTCP()
       rdS--;
     }
 
-    String str = "";
-    OSCMessage(rMsg);
+    OSCMessage(rMsg); //initialize a new OSC message to put this in
+
+    if (client.available() < len.value)
+    {
+      client.flush();
+      return; //not enough data - should we wait??
+    }
 
     while (len.value--)
       //str +=(char)client.read();
@@ -116,14 +133,21 @@ void EosOscManager::checkForIncomingTCP()
     if (!rMsg.hasError()) 
     { //is valid OSC
       //send out via SLIP
+      delay(10);
       yield();
       this->routeOSC(rMsg);
       //delay(1);
+    } else
+    {
+      Serial.print("error");
     }
 
     rMsg.empty();
 
-  } //*/
+  } else {
+    client.flush();//*/
+  }
+
 }
 
 void EosOscManager::resetConnection()

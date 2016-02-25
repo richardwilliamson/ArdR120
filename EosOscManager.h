@@ -23,8 +23,6 @@ EosOscHandler *handler = NULL;
 bool setHandler = false;
 //EosOscCommand *handler;// = NULL;
 
-
-
 public:
 
 void sendOSCMessage(OSCMessage &theMessage);

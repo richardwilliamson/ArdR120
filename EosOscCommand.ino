@@ -11,19 +11,20 @@ void EosOscCommand::makeMessages()
     strcpy(newCmdMessage, cmdMessage);
     strcpy(keyCmdMessage, cmdMessage);
     strcpy(msgInMessage, cmdMessage);
-    strcat(msgInMessage, "/out/cmd");
+    strcat(msgInMessage, "out/cmd");
   } else
   { //use usernumber
     //strcpy(preMessage, );
     char userNum[3];
     sprintf(userNum, "%i", manager->getUser());
 
-    strcpy(newCmdMessage, "/eos/user/");
-    strcat(newCmdMessage, userNum);
+    strcpy(cmdMessage, "/eos/user/");
+    strcat(cmdMessage, userNum);
+    strcat(cmdMessage, "/");
 
-    strcpy(cmdMessage, newCmdMessage);
+    strcpy(newCmdMessage, cmdMessage);
 
-    strcpy(keyCmdMessage, newCmdMessage);
+    strcpy(keyCmdMessage, cmdMessage);
 
     strcpy(msgInMessage, "/eos/out/user/");
     strcat(msgInMessage, userNum);
@@ -32,6 +33,7 @@ void EosOscCommand::makeMessages()
   strcat(newCmdMessage, "newcmd");
   strcat(cmdMessage, "cmd");
   strcat(keyCmdMessage, "key/");
+
 }
 
 EosOscCommand::EosOscCommand()
@@ -51,8 +53,7 @@ void EosOscCommand::userChanged()
 }
 
 void EosOscCommand::sendCommand(const char * cmd)
-{
-
+{  
   OSCMessage msg(cmdMessage);
   msg.add(cmd);
 

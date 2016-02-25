@@ -6,6 +6,22 @@
 
 #include <ESP8266WiFi.h>
 
+//display characters
+
+#define SND_HOME 1   //puts cursor back at start
+#define SND_BACKSPACE 8
+#define SND_SPACE 9 
+#define SND_RIGHT_CHAR 9 //space and right char same?? not space!
+#define SND_DOWN_LINE 10
+#define SND_LEFT_LINE 13
+#define SND_CLEAR 12
+
+#define SND_NEW_LINE Serial.write(SND_DOWN_LINE); Serial.write(SND_LEFT_LINE)
+
+//24 makes next chars flash
+//25 makes previous chars flash
+//26 stops all flashing
+
 EosOscManager oscManager;
 EosOscCommand oscCommand;
 
@@ -23,9 +39,10 @@ union MsgLength   //this means I can acces the bytes and the long value for a 4 
 
 //note buttons go top down on R120 (stage electrics is different)
 //first button is actually 48
-#define BUTTON_OFFSET 48
+#define BUTTON_OFFSET 47
 
 enum Buttons {
+  BTN_NONE,
   BTN_F1,
   BTN_REC_SUB,
   BTN_GO,
@@ -80,9 +97,12 @@ void checkForIncomingTCP();
 
 void interpretCmd(Buttons key);
 void interpretAtAtCmd(Buttons key);
+void interpretSetupCmd(Buttons key);
 
 void sendCmd(char cmd[]);
 void sendKey(char key[]);
+
+Buttons getKeyPress();
 
 #endif
 

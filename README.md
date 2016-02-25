@@ -91,6 +91,8 @@ Press [*] to confirm settings
 
 . special chars
 
+[@ATT] [9] = Enter bootloader mode (needs arduino IDE for now)
+
 
 
 #current problems/TODO
