@@ -59,7 +59,7 @@ Setup commands are accessed by pressing [@ATT] - [@ATT] (press it twice), follow
 Press [*] to confirm settings
 [up] and [down] will move left/right where applicable
 
-[@ATT] [1] = Set user (0 > 200), [Clr] will revert to the connected console's user (meaning commands will appear on that console's command line and vice-versa
+[@ATT] [1] = Set user (0 > 254), 0 will revert to the connected console's user (meaning commands will appear on that console's command line and vice-versa
 
 [@ATT] [2] = Set device IP, [Clr] will revert to DHCP, use [.] as applicable for segments
 
@@ -87,7 +87,8 @@ Press [*] to confirm settings
 
 9, Y, Z, y, z
 
-0
+0, space
+
 
 . special chars
 

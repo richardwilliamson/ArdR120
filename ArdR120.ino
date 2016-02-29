@@ -7,13 +7,11 @@
 //top left key 48, bottom right 92 (top>bottom, left to right)
 //1=64
 
-
-
-#include <OSCMessage.h>
-
 #include "ArdR120.h"
-#include "BufferStore.h"
+
 #include "SetupManager.h"
+
+
 
 int status = WL_IDLE_STATUS;
 const char* ssid = "richard";  //  your network name (SSID)
@@ -21,12 +19,6 @@ const char* ssid = "richard";  //  your network name (SSID)
 
 const char* pass = "appleapple";       // your network password
 //const char* pass = "9315634916";       // your network password
-
-IPAddress outIp(192, 168, 1, 9); //IP of console
-
-IPAddress inIp(192, 168, 1, 200);
-IPAddress gateway(192, 168, 1, 1);
-IPAddress subnet(255, 255, 255, 0);
 
 
 boolean doConnect(bool verbose)
@@ -80,7 +72,7 @@ boolean doConnect(bool verbose)
   }
 
   if (tries) //since tries is not 0 we must not have been connected but now are!
-    oscManager.resetConnection(); //since we weren't connected and now are we should reset the connection to be safe
+    EosOscManager::getInstance()->resetConnection(); //since we weren't connected and now are we should reset the connection to be safe
 
   if (verbose)
   {
@@ -120,11 +112,16 @@ void setup() {
     Serial.flush(); //empty the buffer so we ignore the input
   }
 
-  oscManager = EosOscManager(5, client); //should set which user from settings..
-  oscCommand = EosOscCommand(&oscManager);
+  EosOscManager::getInstance()->setUser(5); //should set which user from settings..
+  EosOscManager::getInstance()->setClient(client);
+  EosOscManager::getInstance()->resetConnection();
 
-  oscManager.registerHandler(&oscCommand);
+  oscCommand = EosOscCommand();
+  oscChannel = EosOscChannel();
 
+  EosOscManager::getInstance()->registerHandler(&oscCommand);
+  EosOscManager::getInstance()->registerHandler(&oscChannel);
+  
   delay(1000); //display message for a second before then trying to update screen
 
 
@@ -167,14 +164,12 @@ void loop() {
   {
     while (!Serial.available())
     {
-      Serial.print("WAIING");
       yield(); //just give up until we get a button press
     }
     Serial.flush(); //empty the buffer so we ignore the input
   }
 
-
-  oscManager.checkForIncomingTCP();
+  EosOscManager::getInstance()->checkForIncomingTCP();
 
   yield();
 
@@ -189,17 +184,18 @@ void loop() {
 
 
   //update screen if required
-  if (oscManager.getScreenNeedsUpdate())
+  if (EosOscManager::getInstance()->getScreenNeedsUpdate())
   {
+
     Serial.write(SND_CLEAR);
 
-    Serial.print(channelInfo);
+    oscChannel.writeCommandLine(Serial);
 
     SND_NEW_LINE;
 
-    Serial.write(commandInfo);
+    oscCommand.writeCommandLine(Serial);
 
-    oscManager.setScreenNeedsUpdate(false);
+    EosOscManager::getInstance()->setScreenNeedsUpdate(false);
 
   }
   //delay(10); //keeps ESP happy*/

@@ -3,6 +3,11 @@
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
 
+/*TODO 
+  - Can we escape upload mode? [Rem_dim]
+  - Upload through web browser (start a web server, display IP - user uploads binary from their machine
+  */
+
 void enterUploadMode()
 {
   Serial.write(SND_CLEAR);

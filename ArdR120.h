@@ -1,8 +1,11 @@
 #ifndef ArdR120_h
 #define ArdR120_h
-#include "OSCMessage.h"
-#include "EosOscManager.h"
-#include "EosOscCommand.h"
+#include <OSCMessage.h>
+#include <EosOscManager.h>
+#include <EosOscCommand.h>
+#include <EosOscChannel.h>
+
+#include "BufferStore.h"
 
 #include <ESP8266WiFi.h>
 
@@ -21,20 +24,16 @@
 //24 makes next chars flash
 //25 makes previous chars flash
 //26 stops all flashing
-
-EosOscManager oscManager;
 EosOscCommand oscCommand;
+EosOscChannel oscChannel;
 
 WiFiClient client;
 
-union MsgLength   //this means I can acces the bytes and the long value for a 4 didgit int (long)
-{
-  unsigned long value;
-  byte bytes[4];
-};
+IPAddress outIp(192, 168, 1, 9); //IP of console
 
-
-
+IPAddress inIp(192, 168, 1, 200);
+IPAddress gateway(192, 168, 1, 1);
+IPAddress subnet(255, 255, 255, 0);
 
 
 //note buttons go top down on R120 (stage electrics is different)
@@ -90,8 +89,6 @@ enum Buttons {
   BTN_ENTER
 };
 
-char channelInfo[30];
-char commandInfo[30];
 
 void checkForIncomingTCP();
 
