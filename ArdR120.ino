@@ -117,10 +117,9 @@ void setup() {
   EosOscManager::getInstance()->resetConnection();
 
   oscCommand = EosOscCommand();
-  oscChannel = EosOscChannel();
 
   EosOscManager::getInstance()->registerHandler(&oscCommand);
-  EosOscManager::getInstance()->registerHandler(&oscChannel);
+  EosOscManager::getInstance()->registerHandler(EosOscChannel::getInstance());
   
   delay(1000); //display message for a second before then trying to update screen
 
@@ -189,7 +188,7 @@ void loop() {
 
     Serial.write(SND_CLEAR);
 
-    oscChannel.writeCommandLine(Serial);
+    EosOscChannel::getInstance()->writeCommandLine(Serial);
 
     SND_NEW_LINE;
 

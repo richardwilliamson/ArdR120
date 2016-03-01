@@ -459,7 +459,9 @@ void saveSetupIp()
   //split the string into it's bits
   bool error = false;
   char * pch;
-  pch = strtok (inputBuffer, ".");
+  char tempBuffer[sizeof(inputBuffer)];
+  strcpy(tempBuffer, inputBuffer);
+  pch = strtok (tempBuffer, ".");
   byte i = 0;
   byte res[4]; //ready to recieve -
   while (pch != NULL)
@@ -467,7 +469,8 @@ void saveSetupIp()
     if (i < 4)
     {
       int number = atoi(pch);
-      if (number < 254 && number < 0)
+
+      if (number < 254 && number > 0)
       {
         //ok for now
         if (i == 0 && number == 0)
@@ -490,6 +493,7 @@ void saveSetupIp()
     pch = strtok (NULL, " ,.-");
     i++;
   }
+
 
   if (i != 4)
     error = true;

@@ -25,7 +25,6 @@
 //25 makes previous chars flash
 //26 stops all flashing
 EosOscCommand oscCommand;
-EosOscChannel oscChannel;
 
 WiFiClient client;
 
