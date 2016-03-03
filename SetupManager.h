@@ -28,6 +28,10 @@ void saveSetupUser();
 bool doCursorChange(Buttons key); //returns true if it's done something, false if not
 bool getNumberFromKey(Buttons key, bool allowDot, bool allowClear); //updates the buffer and returns true. Returns false if didn't update
 void checkCursor(); //checks the cursor is within range
+void positionCursor();
+bool getASCIIFromKey(Buttons key); 
+void getLetterFromKey(byte number, Buttons key);
+
 
 void pad(char * str, byte len);
 
@@ -38,6 +42,10 @@ void saveSetupIp();
 void interpretSetupWifi(Buttons key);
 void displaySetupWifi();
 void saveSetupWifi();
+
+void interpretSetupWifiPassword(Buttons key);
+void displaySetupWifiPassword();
+void saveSetupWifiPassword();
 
 
 

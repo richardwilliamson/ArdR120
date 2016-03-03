@@ -47,8 +47,10 @@ void interpretSetupCmd(Buttons key)
         interpretSetupIp(key);
         break;
       case SETUP_MODE_WIFI_SSID:
-      case SETUP_MODE_WIFI_PASS:
         interpretSetupWifi(key);
+        break;
+      case SETUP_MODE_WIFI_PASS:
+        interpretSetupWifiPassword(key);
         break;
     }
     return;
@@ -119,8 +121,10 @@ void displaySetup()
       displaySetupIp();
       break;
     case SETUP_MODE_WIFI_SSID:
-    case SETUP_MODE_WIFI_PASS:
       displaySetupWifi();
+      break;
+    case SETUP_MODE_WIFI_PASS:
+      displaySetupWifiPassword();
       break;
   }
 }
@@ -144,12 +148,7 @@ void displaySetupUser()
 
   Serial.print(inputBuffer);
 
-  Serial.write(SND_LEFT_LINE); //send the cursor to the start
-
-  for (byte i = 0; i < cursorPosition; i++)
-  {
-    Serial.write(SND_RIGHT_CHAR);
-  }
+  positionCursor();
 
 }
 
@@ -254,6 +253,17 @@ void checkCursor()
   if (cursorPosition > currentBufferLength - 1) cursorPosition = 0;
 }
 
+void positionCursor()
+{
+
+  Serial.write(SND_LEFT_LINE); //send the cursor to the start
+
+  for (byte i = 0; i < cursorPosition; i++)
+  {
+    Serial.write(SND_RIGHT_CHAR);
+  }
+
+}
 bool doCursorChange(Buttons key)
 {
   switch (key)
@@ -360,6 +370,105 @@ bool getNumberFromKey(Buttons key, bool allowClear, bool allowDot)
 
   return false; //no valid key sent
 }
+
+Buttons lastKey = BTN_NONE;
+byte btnCount = 0;
+bool getASCIIFromKey(Buttons key)
+{
+  switch (key)
+  {
+    case BTN_CLR:
+      inputBuffer[cursorPosition] = ' ';
+      lastKey = key;
+      btnCount = 0;
+      return true;
+      break;
+    case BTN_1:
+      getLetterFromKey(1, key);
+      return true;
+      break;
+    case BTN_2:
+      getLetterFromKey(2, key);
+      return true;
+      break;
+    case BTN_3:
+      getLetterFromKey(3, key);
+      return true;
+      break;
+    case BTN_4:
+      getLetterFromKey(4, key);
+      return true;
+      break;
+    case BTN_5:
+      getLetterFromKey(5, key);
+      return true;
+      break;
+    case BTN_6:
+      getLetterFromKey(6, key);
+      return true;
+      break;
+    case BTN_7:
+      getLetterFromKey(7, key);
+      return true;
+      break;
+    case BTN_8:
+      getLetterFromKey(8, key);
+      return true;
+      break;
+    case BTN_9:
+      getLetterFromKey(9, key);
+      return true;
+      break;
+    case BTN_0:
+      inputBuffer[cursorPosition] = '0';
+      cursorPosition ++;
+      checkCursor();
+      return true;
+      break;
+    case BTN_DOT:
+
+      inputBuffer[cursorPosition] = '.';
+      cursorPosition ++;
+      checkCursor();
+      return true;
+      break;
+  }
+
+  return false;
+}
+
+void getLetterFromKey(byte number, Buttons key) //number should be the number we want (so char 48+num), for now assume all have 3 letters
+{
+  if (lastKey != key && lastKey != BTN_UP && lastKey != BTN_DOWN && lastKey != BTN_CLR && lastKey != BTN_NONE)
+  {
+    cursorPosition++;
+    checkCursor();
+  }
+
+  if (lastKey == key)
+  {
+    //is a subsequent press - A, B, C, a, b, c
+    //A = 65, a = 97
+    byte offset = (3 * (number - 1));
+    if (offset > 0) offset = offset - (1 * (number - 1));
+
+    if ((number < 9 && btnCount < 3) || btnCount < 2) //if 9 we only have two letters
+      inputBuffer[cursorPosition] = 48 + 17 + number - 1 + btnCount + offset; //(to get in right place in ascii table, 48 = '0', 17 is diff from '0' > 'A'
+    else if ((number < 9 && btnCount < 6) || btnCount < 4) //if 9 we only have two letters
+      inputBuffer[cursorPosition] = 48 + 17 + 32 + number - 1 + (btnCount - 3) + offset;
+    else
+      btnCount = 255; //so when we ++ we go to 0!
+    btnCount ++;
+  } else
+    btnCount = 0;
+  if (btnCount == 0)
+  {
+    inputBuffer[cursorPosition] = 48 + number;
+    btnCount = 0;
+  }
+
+  checkCursor();
+}
 void interpretSetupIp(Buttons key)
 {
   //interpret what to do in the IP setup
@@ -442,14 +551,7 @@ void displaySetupIp()
   }
 
   Serial.print(inputBuffer);
-
-  Serial.write(SND_LEFT_LINE); //send the cursor to the start
-
-  for (byte i = 0; i < cursorPosition; i++)
-  {
-    Serial.write(SND_RIGHT_CHAR);
-  }
-
+  positionCursor();
 }
 
 void saveSetupIp()
@@ -537,6 +639,7 @@ void displaySetupWifi()
   Serial.print("Select Wifi Network");
   SND_NEW_LINE;
 
+
   if (currentBufferLength == 0)
   {
     //assume not got anything yet..
@@ -559,10 +662,89 @@ void interpretSetupWifi(Buttons key)
     return;
   }
 
+  if (key == BTN_ENTER)
+  {
+    saveSetupWifi();
+    //save
+  }
+
 }
 void saveSetupWifi()
 {
+  //TODO - NEED TO ACTUALLY SAVE THE THING!!!
+  Serial.write(SND_CLEAR);
+  Serial.print("Wifi Changed to:");
+  SND_NEW_LINE;
+  Serial.print(WiFi.SSID(cursorPosition));
+  SND_NEW_LINE;
+  if (WiFi.encryptionType(cursorPosition) != ENC_TYPE_NONE)
+  {
+    Serial.print("Password required");
+    setupMode = SETUP_MODE_WIFI_PASS;
+    //TODO NEED TO SAVE THE SSID SOMEWHERE WHILE WE GET THE PASSWORD, BUT NOT OVERWRITE OLD SSID - MAYBE PUT ON FLASH TO BE SAFE?
+    cursorPosition = 0;
+    currentBufferLength = 0; //set to zero so the next stage knows it needs changing..
+    updateScreenSetup = true;
+  } else
+  {
+    Serial.print("open network");
+    exitSetup();
+  }
 
+  delay(1500);
 }
 
 
+
+void displaySetupWifiPassword()
+{
+  Serial.print("Enter password for");
+  SND_NEW_LINE;
+  Serial.print("-- show SSID -- "); //truncate to 16 chars though!
+  SND_NEW_LINE;
+
+  //should we save past wifi network info somehow??
+  if (currentBufferLength == 0)
+  {
+    //set up input buffer
+    currentBufferLength = 17;
+    cursorPosition = 0;
+    lastKey = BTN_NONE;
+    strcpy(inputBuffer, "                "); //empty buffer
+  }
+  Serial.print(inputBuffer);
+  positionCursor();
+
+
+}
+void interpretSetupWifiPassword(Buttons key)
+{
+  if (getASCIIFromKey(key))
+  {
+    updateScreenSetup = true;
+    lastKey = key;
+
+    return;
+  }
+
+  if (doCursorChange(key)) //move the cursor
+  {
+    updateScreenSetup = true;
+    lastKey = key;
+    return;
+  }
+
+  lastKey = key;
+
+  if (key == BTN_ENTER)
+  {
+    saveSetupWifiPassword();
+    //save
+  }
+
+}
+void saveSetupWifiPassword()
+{
+  //TODO - NEED TO ACTUALLY SAVE THE THING!!!
+
+}
