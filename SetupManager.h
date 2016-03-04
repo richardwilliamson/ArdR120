@@ -17,13 +17,22 @@ byte setupMode = 0;
 #define SETUP_MODE_UPLOAD 9
 
 
+#define SETUP_STORE_VERSION 0 //17 bytes
+
+#define SETUP_STORE_USER 17 //1 byte
+#define SETUP_STORE_IP 18 //4 bytes - if 0.0.0.0 then use dhcp
+#define SETUP_STORE_SUBNET 22 //4 bytes
+#define SETUP_STORE_CONSOLE_IP 26 //4 bytes
+
+#define SETUP_STORE_SSID 30 //33 bytes
+#define SETUP_STORE_PASS 63 //17 bytes
+
+
+
+void enterSetup(byte mode);
 void doSetupLoop();
 void displaySetup();
 void exitSetup();
-
-void interpretSetupUser(Buttons key);
-void displaySetupUser();
-void saveSetupUser();
 
 bool doCursorChange(Buttons key); //returns true if it's done something, false if not
 bool getNumberFromKey(Buttons key, bool allowDot, bool allowClear); //updates the buffer and returns true. Returns false if didn't update
@@ -38,14 +47,13 @@ void pad(char * str, byte len);
 void interpretSetupIp(Buttons key);
 void displaySetupIp();
 void saveSetupIp();
+void readIpEEPROM();
 
-void interpretSetupWifi(Buttons key);
-void displaySetupWifi();
-void saveSetupWifi();
+void interpretSetupUser(Buttons key);
+void displaySetupUser();
+void saveSetupUser();
+void readUserEEPROM();
 
-void interpretSetupWifiPassword(Buttons key);
-void displaySetupWifiPassword();
-void saveSetupWifiPassword();
 
 
 

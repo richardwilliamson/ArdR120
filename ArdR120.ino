@@ -10,14 +10,12 @@
 #include "ArdR120.h"
 
 #include "SetupManager.h"
+#include "Setup_wifi.h"
 
-
+#include <EEPROM.h>
 
 int status = WL_IDLE_STATUS;
-const char* ssid = "richard";  //  your network name (SSID)
-//const char* ssid = "BTBusinessHub-125";  //  your network name (SSID)
 
-const char* pass = "appleapple";       // your network password
 //const char* pass = "9315634916";       // your network password
 
 
@@ -25,14 +23,7 @@ boolean doConnect(bool verbose)
 {
   //make sure connected to wifi
 
-  byte tries = 0;
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    tries++;
-    if (tries > 30) {
-      break;
-    }
-  }
+  connectWifi();
 
   if (WiFi.status() != WL_CONNECTED)
   {
@@ -40,6 +31,9 @@ boolean doConnect(bool verbose)
     Serial.print("wifi failed:");
     SND_NEW_LINE;
     Serial.print(ssid);
+    Serial.print(pass);
+    delay(1000);
+    enterSetup(SETUP_MODE_WIFI_SSID);
     return false;
   }
   if (verbose)
@@ -51,13 +45,13 @@ boolean doConnect(bool verbose)
   yield();
 
   //now connect to console
-  tries = 0;
+  byte tries = 0;
   while (!client.connected())
   {
     delay(10);
     client.connect(outIp, 3032); //should we do any kind of timeout??
     tries++;
-    if (tries > 30) 
+    if (tries > 10) 
       break;
     
   }
@@ -71,8 +65,12 @@ boolean doConnect(bool verbose)
     return false;
   }
 
+
   if (tries) //since tries is not 0 we must not have been connected but now are!
-    EosOscManager::getInstance()->resetConnection(); //since we weren't connected and now are we should reset the connection to be safe
+  {
+      EosOscManager::getInstance()->setClient(client);
+      EosOscManager::getInstance()->resetConnection(); //since we weren't connected and now are we should reset the connection to be safe
+  }
 
   if (verbose)
   {
@@ -89,8 +87,7 @@ boolean doConnect(bool verbose)
 }
 void setup() {
 
-  WiFi.config(inIp, gateway, subnet); //sets up details of itself
-  WiFi.begin(ssid, pass);
+
 
   //  WiFi.begin(ssid);
 
@@ -103,24 +100,27 @@ void setup() {
   Serial.write(SND_CLEAR);
   Serial.print("WELCOME");
 
-  while (!doConnect(true))
-  {
-    while (!Serial.available())
-    {
-      yield(); //just give up until we get a button press
-    }
-    Serial.flush(); //empty the buffer so we ignore the input
-  }
+  readIpEEPROM();
 
+  //Serial.print(inIp);
+  if (inIp[0]!=0) //only config if we are not DHCP
+      WiFi.config(inIp, IPAddress(0,0,0,0), IPAddress(255,255,255,0));////, IPAddress(0,0,0,0), subnet); //sets up details of itself
+      
+  readWifiEEPROM();
+  
   EosOscManager::getInstance()->setUser(5); //should set which user from settings..
-  EosOscManager::getInstance()->setClient(client);
-  EosOscManager::getInstance()->resetConnection();
-
   oscCommand = EosOscCommand();
 
   EosOscManager::getInstance()->registerHandler(&oscCommand);
   EosOscManager::getInstance()->registerHandler(EosOscChannel::getInstance());
+
+  bool connected = doConnect(true);
   
+  if (!connected)
+    return; //don't do anything else (should now be in a setup mode)
+
+  EosOscManager::getInstance()->resetConnection();
+
   delay(1000); //display message for a second before then trying to update screen
 
 
@@ -158,15 +158,21 @@ void loop() {
     return;
   }
 
-
-  while (!doConnect(false))
+  if (!doConnect(false))
   {
-    while (!Serial.available())
-    {
-      yield(); //just give up until we get a button press
-    }
-    Serial.flush(); //empty the buffer so we ignore the input
+    //return
+    //TODO - should listen out for a button press to enter setup?
+    return;
   }
+//  boolean connected 
+//  while (!doConnect(false))
+//  {
+//    while (!Serial.available())
+//    {
+//      yield(); //just give up until we get a button press
+//    }
+//    Serial.flush(); //empty the buffer so we ignore the input
+//  }
 
   EosOscManager::getInstance()->checkForIncomingTCP();
 

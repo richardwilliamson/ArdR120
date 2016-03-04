@@ -1,5 +1,8 @@
 #include "SetupManager.h"
 #include "UploadManager.h"
+#include "setup_wifi.h"
+
+#include <EEPROM.h>
 
 bool updateScreenSetup = false;
 
@@ -7,6 +10,11 @@ char inputBuffer[17]; //max size of input buffer
 byte cursorPosition;
 byte currentBufferLength;
 
+void enterSetup(byte mode)
+{
+  setupMode = mode;
+  updateScreenSetup = true;
+}
 void doSetupLoop()
 {
 
@@ -216,15 +224,21 @@ void saveSetupUser()
   EosOscManager::getInstance()->setUser(newUser);
   EosOscManager::getInstance()->resetConnection();
 
-  //TODO SAVE TO PERSISTANT MEMORY
 
   Serial.write(SND_CLEAR);
+  EEPROM.begin(512);
+  EEPROM.put(SETUP_STORE_USER, newUser);
+  EEPROM.commit();
+  EEPROM.end();
+
   if (newUser != 255)
   {
     Serial.print("User Number changed to ");
     Serial.print(newUser);
+
   } else
     Serial.print("User changed to console user");
+
 
   delay(1500);
 
@@ -554,6 +568,14 @@ void displaySetupIp()
   positionCursor();
 }
 
+void saveIP(IPAddress ip, byte start)
+{
+  EEPROM.begin(512);
+  for (byte i=0; i<4; i++)
+    EEPROM.put(start+i, ip[i]);
+  EEPROM.commit();
+  EEPROM.end();
+}
 void saveSetupIp()
 {
 
@@ -608,14 +630,17 @@ void saveSetupIp()
     {
       case SETUP_MODE_DEV_IP:
         inIp = res;
+        saveIP(inIp, SETUP_STORE_IP);
         Serial.print("Device IP changed");
         break;
       case SETUP_MODE_DEV_SUBNET:
         subnet = res;
+        saveIP(subnet, SETUP_STORE_SUBNET);
         Serial.print("Subnet changed");
         break;
       case SETUP_MODE_CONSOLE_IP:
         outIp = res;
+        saveIP(outIp, SETUP_STORE_CONSOLE_IP);
         Serial.print("console IP changd");
         break;
     }
@@ -632,119 +657,32 @@ void saveSetupIp()
   }
 
 }
-
-
-void displaySetupWifi()
+void readIpEEPROM()
 {
-  Serial.print("Select Wifi Network");
-  SND_NEW_LINE;
+  EEPROM.begin(512);
+  EEPROM.get(SETUP_STORE_IP, inIp[0]);
+  EEPROM.get(SETUP_STORE_IP+1, inIp[1]);
+  EEPROM.get(SETUP_STORE_IP+2, inIp[2]);
+  EEPROM.get(SETUP_STORE_IP+3, inIp[3]);
 
+  EEPROM.get(SETUP_STORE_SUBNET, subnet[0]);
+  EEPROM.get(SETUP_STORE_SUBNET+1, subnet[1]);
+  EEPROM.get(SETUP_STORE_SUBNET+2, subnet[2]);
+  EEPROM.get(SETUP_STORE_SUBNET+3, subnet[3]);
 
-  if (currentBufferLength == 0)
-  {
-    //assume not got anything yet..
-    currentBufferLength = WiFi.scanNetworks();
-    cursorPosition = 0;
+  EEPROM.get(SETUP_STORE_CONSOLE_IP, outIp[0]);
+  EEPROM.get(SETUP_STORE_CONSOLE_IP+1, outIp[1]);
+  EEPROM.get(SETUP_STORE_CONSOLE_IP+2, outIp[2]);
+  EEPROM.get(SETUP_STORE_CONSOLE_IP+3, outIp[3]);
+
+  EEPROM.commit();
+  EEPROM.end();
+
+  if (subnet[0]==0 && subnet[1]==0 && subnet[2]==0 && subnet[3]==00)
+  { 
+     //subnet not currently set, so set to 255.255.255.0
+     subnet = (255, 255, 255, 0);
   }
-
-  //display the selected network name
-
-  Serial.print(WiFi.SSID(cursorPosition));
-
-
-}
-void interpretSetupWifi(Buttons key)
-{
-
-  if (doCursorChange(key)) //move the cursor
-  {
-    updateScreenSetup = true;
-    return;
-  }
-
-  if (key == BTN_ENTER)
-  {
-    saveSetupWifi();
-    //save
-  }
-
-}
-void saveSetupWifi()
-{
-  //TODO - NEED TO ACTUALLY SAVE THE THING!!!
-  Serial.write(SND_CLEAR);
-  Serial.print("Wifi Changed to:");
-  SND_NEW_LINE;
-  Serial.print(WiFi.SSID(cursorPosition));
-  SND_NEW_LINE;
-  if (WiFi.encryptionType(cursorPosition) != ENC_TYPE_NONE)
-  {
-    Serial.print("Password required");
-    setupMode = SETUP_MODE_WIFI_PASS;
-    //TODO NEED TO SAVE THE SSID SOMEWHERE WHILE WE GET THE PASSWORD, BUT NOT OVERWRITE OLD SSID - MAYBE PUT ON FLASH TO BE SAFE?
-    cursorPosition = 0;
-    currentBufferLength = 0; //set to zero so the next stage knows it needs changing..
-    updateScreenSetup = true;
-  } else
-  {
-    Serial.print("open network");
-    exitSetup();
-  }
-
-  delay(1500);
 }
 
 
-
-void displaySetupWifiPassword()
-{
-  Serial.print("Enter password for");
-  SND_NEW_LINE;
-  Serial.print("-- show SSID -- "); //truncate to 16 chars though!
-  SND_NEW_LINE;
-
-  //should we save past wifi network info somehow??
-  if (currentBufferLength == 0)
-  {
-    //set up input buffer
-    currentBufferLength = 17;
-    cursorPosition = 0;
-    lastKey = BTN_NONE;
-    strcpy(inputBuffer, "                "); //empty buffer
-  }
-  Serial.print(inputBuffer);
-  positionCursor();
-
-
-}
-void interpretSetupWifiPassword(Buttons key)
-{
-  if (getASCIIFromKey(key))
-  {
-    updateScreenSetup = true;
-    lastKey = key;
-
-    return;
-  }
-
-  if (doCursorChange(key)) //move the cursor
-  {
-    updateScreenSetup = true;
-    lastKey = key;
-    return;
-  }
-
-  lastKey = key;
-
-  if (key == BTN_ENTER)
-  {
-    saveSetupWifiPassword();
-    //save
-  }
-
-}
-void saveSetupWifiPassword()
-{
-  //TODO - NEED TO ACTUALLY SAVE THE THING!!!
-
-}
