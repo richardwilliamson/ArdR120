@@ -98,6 +98,10 @@ void interpretSetupCmd(Buttons key)
       setupMode = SETUP_MODE_WIFI_SSID;
       updateScreenSetup = true;
       break;
+    case BTN_6:
+      setupMode = SETUP_MODE_ACCESSPOINT;
+      updateScreenSetup = true;
+      break;
     case BTN_9:
       setupMode = SETUP_MODE_UPLOAD; //not really needed but..
       enterUploadMode();
@@ -126,6 +130,7 @@ void displaySetup()
     case SETUP_MODE_DEV_IP:
     case SETUP_MODE_DEV_SUBNET:
     case SETUP_MODE_CONSOLE_IP:
+    case SETUP_MODE_DEV_GATEWAY:
       displaySetupIp();
       break;
     case SETUP_MODE_WIFI_SSID:
@@ -134,6 +139,10 @@ void displaySetup()
     case SETUP_MODE_WIFI_PASS:
       displaySetupWifiPassword();
       break;
+    case SETUP_MODE_ACCESSPOINT:
+      enableAccessPoint();
+      break;
+      
   }
 }
 
@@ -220,17 +229,18 @@ void saveSetupUser()
     newUser = 255; //if user has selected 0 then set to 255 (which is currentuser for machine)
 
 
-  //if ok display OK & ret true
-  EosOscManager::getInstance()->setUser(newUser);
+  if (newUser!=EosOscManager::getInstance()->getUser())
+  {  //only update and write if we haven't changed it
+      writeUserEEPROM(newUser);
+        //if ok display OK & ret true
+      EosOscManager::getInstance()->setUser(newUser);
+
+  }
+
   EosOscManager::getInstance()->resetConnection();
 
-
   Serial.write(SND_CLEAR);
-  EEPROM.begin(512);
-  EEPROM.put(SETUP_STORE_USER, newUser);
-  EEPROM.commit();
-  EEPROM.end();
-
+  
   if (newUser != 255)
   {
     Serial.print("User Number changed to ");
@@ -244,6 +254,29 @@ void saveSetupUser()
 
   exitSetup();
 }
+
+
+void writeUserEEPROM(byte user)
+{
+  EEPROM.begin(512);
+  EEPROM.put(SETUP_STORE_USER, user);
+  EEPROM.commit();
+  EEPROM.end();
+}
+
+byte readUserEEPROM()
+{
+  byte aUser =0;
+  EEPROM.begin(512);
+  EEPROM.get(SETUP_STORE_USER, aUser);
+  EEPROM.commit();
+  EEPROM.end();
+
+  return aUser;
+  
+}
+  
+
 
 void pad(char * str, byte len)
 {
@@ -483,206 +516,6 @@ void getLetterFromKey(byte number, Buttons key) //number should be the number we
 
   checkCursor();
 }
-void interpretSetupIp(Buttons key)
-{
-  //interpret what to do in the IP setup
-  //this could be the device IP, the device gateway, or the console IP
-  //if device IP then initially need to prompt as to whether the user wants to use DHCP This should happen before we get here though?
-  //otherwise..
-  //if REMDIM then exit (not save) (HANDLED BEFORE THIS - THIS IS ALL WAY THRU SETUP
-  //if ENTER then save and exit
-  //if CLR then clear the current cursor position
-  //IF UP then increment cursor
-  //IF DOWN then decrement cursor
 
-  currentBufferLength = 15; //(192.168.254.254 = 15 - lucky it just fits on a line )
-
-  if (doCursorChange(key)) //move the cursor
-  {
-    updateScreenSetup = true;
-    return;
-  }
-  if (getNumberFromKey(key, true, true)) //allow clear, allow dot
-  { updateScreenSetup = true;
-    return;
-  }
-  //must have something we aren't expecting!
-
-  switch (key)
-  {
-    case BTN_ENTER:
-      //DO SAVE
-      //***********
-      saveSetupIp();
-      return;
-      break;
-
-  }
-
-}
-void displaySetupIp()
-{
-  switch (setupMode)
-  {
-    case SETUP_MODE_DEV_IP:
-      Serial.print("Device IP:");
-      break;
-    case SETUP_MODE_DEV_SUBNET:
-      Serial.print("Device Subnet:");
-      break;
-    case SETUP_MODE_CONSOLE_IP:
-      Serial.print("Console IP");
-      break;
-  }
-  SND_NEW_LINE;
-
-  if (strlen(inputBuffer) == 0) //if nothing in the buffer convert the current relevant IP to buffer
-  {
-    IPAddress ip;
-    switch (setupMode)
-    {
-      case SETUP_MODE_DEV_IP:
-        ip = inIp;
-        break;
-      case SETUP_MODE_DEV_SUBNET:
-        ip = subnet;
-        break;
-      case SETUP_MODE_CONSOLE_IP:
-        ip = outIp;
-        break;
-    }
-
-    for (byte i = 0; i < 4; i++)
-    {
-      char buf[4]; //XXX plus /0
-      sprintf(buf, "%i", ip[i]);
-      pad(buf, 3);
-      strcat(inputBuffer, buf);
-      if (i < 3)
-        strcat(inputBuffer, "."); //but not the last one!
-    }
-
-  }
-
-  Serial.print(inputBuffer);
-  positionCursor();
-}
-
-void saveIP(IPAddress ip, byte start)
-{
-  EEPROM.begin(512);
-  for (byte i=0; i<4; i++)
-    EEPROM.put(start+i, ip[i]);
-  EEPROM.commit();
-  EEPROM.end();
-}
-void saveSetupIp()
-{
-
-  Serial.write(SND_CLEAR);
-  //split the string into it's bits
-  bool error = false;
-  char * pch;
-  char tempBuffer[sizeof(inputBuffer)];
-  strcpy(tempBuffer, inputBuffer);
-  pch = strtok (tempBuffer, ".");
-  byte i = 0;
-  byte res[4]; //ready to recieve -
-  while (pch != NULL)
-  {
-    if (i < 4)
-    {
-      int number = atoi(pch);
-
-      if (number < 254 && number > 0)
-      {
-        //ok for now
-        if (i == 0 && number == 0)
-        { //first bit can't be 0
-          error = true;
-          break;
-        }
-        res[i] = number;
-      } else
-      {
-        error = true;
-        break;
-      }
-    } else
-    { //got more than four segments
-      error = true;
-      break;
-    }
-    //get the next slice
-    pch = strtok (NULL, " ,.-");
-    i++;
-  }
-
-
-  if (i != 4)
-    error = true;
-
-  if (!error)
-  {
-    //good to save
-    IPAddress ip = (IPAddress)res;
-    switch (setupMode)
-    {
-      case SETUP_MODE_DEV_IP:
-        inIp = res;
-        saveIP(inIp, SETUP_STORE_IP);
-        Serial.print("Device IP changed");
-        break;
-      case SETUP_MODE_DEV_SUBNET:
-        subnet = res;
-        saveIP(subnet, SETUP_STORE_SUBNET);
-        Serial.print("Subnet changed");
-        break;
-      case SETUP_MODE_CONSOLE_IP:
-        outIp = res;
-        saveIP(outIp, SETUP_STORE_CONSOLE_IP);
-        Serial.print("console IP changd");
-        break;
-    }
-
-    //TODO restart networking and save changes to flash
-    delay(1500);
-    exitSetup();
-
-  } else
-  {
-    Serial.print("Error changing IP");
-    delay(1500);
-    updateScreenSetup = true;
-  }
-
-}
-void readIpEEPROM()
-{
-  EEPROM.begin(512);
-  EEPROM.get(SETUP_STORE_IP, inIp[0]);
-  EEPROM.get(SETUP_STORE_IP+1, inIp[1]);
-  EEPROM.get(SETUP_STORE_IP+2, inIp[2]);
-  EEPROM.get(SETUP_STORE_IP+3, inIp[3]);
-
-  EEPROM.get(SETUP_STORE_SUBNET, subnet[0]);
-  EEPROM.get(SETUP_STORE_SUBNET+1, subnet[1]);
-  EEPROM.get(SETUP_STORE_SUBNET+2, subnet[2]);
-  EEPROM.get(SETUP_STORE_SUBNET+3, subnet[3]);
-
-  EEPROM.get(SETUP_STORE_CONSOLE_IP, outIp[0]);
-  EEPROM.get(SETUP_STORE_CONSOLE_IP+1, outIp[1]);
-  EEPROM.get(SETUP_STORE_CONSOLE_IP+2, outIp[2]);
-  EEPROM.get(SETUP_STORE_CONSOLE_IP+3, outIp[3]);
-
-  EEPROM.commit();
-  EEPROM.end();
-
-  if (subnet[0]==0 && subnet[1]==0 && subnet[2]==0 && subnet[3]==00)
-  { 
-     //subnet not currently set, so set to 255.255.255.0
-     subnet = (255, 255, 255, 0);
-  }
-}
 
 

@@ -87,10 +87,12 @@ Press [*] to confirm settings
 
 9, Y, Z, y, z
 
-0, space
-
+0, 
 
 . special chars
+
+[@ATT] [6] enable remote setup - the device will turn into a Wireless Access Point named "ArdR120-xxx" with the password "1234" - navigate to 192.168.1.4 in your browser
+
 
 [@ATT] [9] = Enter bootloader mode (needs arduino IDE for now)
 

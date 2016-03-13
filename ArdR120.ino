@@ -4,19 +4,82 @@
 //Pin 6: RX (data to base/handheld) - wires to XLR male pin 5 > pink
 //Pin 7: TX (data from base/handheld) - wires to XLR male > GREEN
 
-//top left key 48, bottom right 92 (top>bottom, left to right)
-//1=64
+//#define DEBUG
 
 #include "ArdR120.h"
 
 #include "SetupManager.h"
-#include "Setup_wifi.h"
+#include "setup_wifi.h"
 
-#include <EEPROM.h>
+//#include <EEPROM.h>
 
 int status = WL_IDLE_STATUS;
 
 //const char* pass = "9315634916";       // your network password
+
+void setup() {
+  
+  //consoleIP = IPAddress(192,168,1,9);
+  //updateEEPROMConsoleIP();
+
+//    staticIP = IPAddress(192,168,1,200);
+//     IPAddress subnet(255,255,255,0);
+//     IPAddress gateway(192,168,1,1);
+//     updateEEPROMStaticIP(gateway, subnet);
+  
+  
+  Serial.begin(9600);
+  delay(100); //wait for the thing to go alive!
+
+  Serial.write(SND_CLEAR);
+  Serial.print("WELCOME");    
+
+  //start up wifi - has to be before config on ESP (but I think after on normal arduino..)
+  //WiFi.begin("richard", "appleapple"); 
+  WiFi.begin(); 
+
+  if (!getIsDHCP())
+  {  
+     DEBUG_PRINT("Static");
+     //only read this if we are static
+     IPAddress subnet;
+     IPAddress gateway;
+     readEEPROMIP(gateway, subnet);
+     WiFi.config(staticIP, gateway, subnet);
+     DEBUG_PRINT(staticIP);
+  } //otherwise we are DHCP so don't need to call config..
+
+  readEEPROMConsoleIP();
+  //TODO - if we don't have a console IP we should prompt for one..
+  DEBUG_PRINT("reading user");
+  yield();
+  byte user = readUserEEPROM();
+  EosOscManager::getInstance()->setUser(user); //should set which user from settings..
+  oscCommand = EosOscCommand();
+
+  DEBUG_PRINT("register stuff");
+  yield();
+
+  EosOscManager::getInstance()->registerHandler(&oscCommand);
+  EosOscManager::getInstance()->registerHandler(EosOscChannel::getInstance());
+
+  DEBUG_PRINT("connecting");
+  DEBUG_PRINT(WiFi.localIP());
+  
+  bool connected = doConnect(true);
+
+  if (!connected)
+  {
+    return; //don't do anything else (should now be in a setup mode)
+  }
+
+  EosOscManager::getInstance()->resetConnection();
+
+  delay(1000); //display message for a second before then trying to update screen
+
+
+
+}
 
 
 boolean doConnect(bool verbose)
@@ -30,17 +93,34 @@ boolean doConnect(bool verbose)
     Serial.write(SND_CLEAR);
     Serial.print("wifi failed:");
     SND_NEW_LINE;
-    Serial.print(ssid);
-    Serial.print(pass);
-    delay(1000);
-    enterSetup(SETUP_MODE_WIFI_SSID);
+    Serial.print(WiFi.SSID());
+    //Serial.print(pass);
+    Serial.print("@ATT auto config, REMDIM man confi, or retry");
+    while(1) //wait for input and either go to config or retry
+    {
+      yield();
+        Buttons key = getKeyPress();
+        if (key==BTN_ATT)
+        { //go to config
+            enterSetup(SETUP_MODE_ACCESSPOINT);
+            return false;
+        } else if (key==BTN_REM_DIM)
+        { 
+            enterSetup(SETUP_MODE_WIFI_SSID);
+            return false;
+        } else if (key!=BTN_NONE)
+        { //just retry
+            return false;
+        }
+        
+    }
     return false;
   }
   if (verbose)
   {
     Serial.print("Connected to:");
     SND_NEW_LINE;
-    Serial.print(ssid);
+    Serial.print(WiFi.SSID());
   }
   yield();
 
@@ -49,7 +129,7 @@ boolean doConnect(bool verbose)
   while (!client.connected())
   {
     delay(10);
-    client.connect(outIp, 3032); //should we do any kind of timeout??
+    client.connect(consoleIP, 3032); //should we do any kind of timeout??
     tries++;
     if (tries > 10) 
       break;
@@ -61,7 +141,22 @@ boolean doConnect(bool verbose)
     Serial.write(SND_CLEAR);
     Serial.print("Console failed:");
     SND_NEW_LINE;
-    Serial.print(outIp);
+    Serial.print(consoleIP);
+    Serial.print("@ATT configure, any key retry");
+    while(1) //wait for input and either go to config or retry
+    {
+      yield();
+        Buttons key = getKeyPress();
+        if (key==BTN_ATT)
+        { //go to config
+            enterSetup(SETUP_MODE_CONSOLE_IP);
+            return false;
+        } else if (key!=BTN_NONE)
+        { //just retry
+            return false;
+        }
+        
+    }
     return false;
   }
 
@@ -76,52 +171,11 @@ boolean doConnect(bool verbose)
   {
     Serial.print("Console connected:");
     SND_NEW_LINE;
-    Serial.print(outIp);
+    Serial.print(consoleIP);
   }
 
   return true;
 
-
-
-
-}
-void setup() {
-
-
-
-  //  WiFi.begin(ssid);
-
-  // put your setup code here, to run once:
-  Serial.begin(9600);
-
-  //boot into the thing
-  delay(100); //wait for the thing to go alive!
-
-  Serial.write(SND_CLEAR);
-  Serial.print("WELCOME");
-
-  readIpEEPROM();
-
-  //Serial.print(inIp);
-  if (inIp[0]!=0) //only config if we are not DHCP
-      WiFi.config(inIp, IPAddress(0,0,0,0), IPAddress(255,255,255,0));////, IPAddress(0,0,0,0), subnet); //sets up details of itself
-      
-  readWifiEEPROM();
-  
-  EosOscManager::getInstance()->setUser(5); //should set which user from settings..
-  oscCommand = EosOscCommand();
-
-  EosOscManager::getInstance()->registerHandler(&oscCommand);
-  EosOscManager::getInstance()->registerHandler(EosOscChannel::getInstance());
-
-  bool connected = doConnect(true);
-  
-  if (!connected)
-    return; //don't do anything else (should now be in a setup mode)
-
-  EosOscManager::getInstance()->resetConnection();
-
-  delay(1000); //display message for a second before then trying to update screen
 
 
 
@@ -428,6 +482,7 @@ void interpretAtAtCmd(Buttons key)
       }
   }
 }
+
 
 
 

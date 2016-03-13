@@ -1,7 +1,9 @@
 #ifndef SETUP_WIFI_h
 #define SETUP_WIFI_h
 
+IPAddress staticIP(0,0,0,0);
 
+IPAddress consoleIP; //IP of console
 
 void interpretSetupWifi(Buttons key);
 void displaySetupWifi();
@@ -12,12 +14,32 @@ void displaySetupWifiPassword();
 void saveSetupWifiPassword();
 
 
-void readWifiEEPROM();
 void connectWifi();
 
+void enableAccessPoint();
 
-char ssid[33];  //  your network name (SSID)
-char pass[17];       // your network password
+
+void updateIP(IPAddress &ip, byte storeAddr);
+void readIP(IPAddress &ip, byte storeAddr);
+
+void updateEEPROMStaticIP(IPAddress gateway, IPAddress subnet);
+void updateEEPROMDhcpIP();
+void updateEEPROMConsoleIP();
+
+void readEEPROMIP(IPAddress &gateway, IPAddress &subnet);
+void readEEPROMConsoleIP();
+
+
+
+void interpretSetupIp(Buttons key);
+void displaySetupIp();
+void saveSetupIp();
+
+bool getIsDHCP();
+
+
+
 
 
 #endif
+

@@ -4,12 +4,20 @@
 #include <EosOscManager.h>
 #include <EosOscCommand.h>
 #include <EosOscChannel.h>
+//#include <WiFiManager.h>
 
 #include "BufferStore.h"
 
 #include <ESP8266WiFi.h>
 
 //display characters
+
+#ifdef DEBUG
+ #define DEBUG_PRINT(x)  Serial.println (x)
+#else
+ #define DEBUG_PRINT(x)
+#endif
+
 
 #define SND_HOME 1   //puts cursor back at start
 #define SND_BACKSPACE 8
@@ -28,11 +36,9 @@ EosOscCommand oscCommand;
 
 WiFiClient client;
 
-IPAddress outIp(192, 168, 1, 9); //IP of console
-
-IPAddress inIp(192, 168, 1, 200);
-IPAddress gateway(192, 168, 1, 1);
-IPAddress subnet(255, 255, 255, 0);
+//IPAddress inIp(192, 168, 1, 200); //these can all be saved automagically apparently
+//IPAddress gateway(192, 168, 1, 1);
+//IPAddress subnet(255, 255, 255, 0);
 
 
 //note buttons go top down on R120 (stage electrics is different)
@@ -89,6 +95,7 @@ enum Buttons {
 };
 
 
+boolean doConnect(bool verbose);
 void checkForIncomingTCP();
 
 void interpretCmd(Buttons key);
@@ -101,5 +108,6 @@ void sendKey(char key[]);
 Buttons getKeyPress();
 
 #endif
+
 
 
