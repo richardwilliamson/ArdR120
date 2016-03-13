@@ -14,8 +14,10 @@
 
 #ifdef DEBUG
  #define DEBUG_PRINT(x)  Serial.println (x)
+ #define DEBUG_DELAY delay(1000)
 #else
  #define DEBUG_PRINT(x)
+ #define DEBUG_DELAY
 #endif
 
 

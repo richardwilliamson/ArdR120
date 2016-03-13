@@ -29,10 +29,12 @@ void updateEEPROMConsoleIP();
 void readEEPROMIP(IPAddress &gateway, IPAddress &subnet);
 void readEEPROMConsoleIP();
 
+void displaySetupNetworkType();
+void interpretSetupNetworkType(Buttons key);
+void saveSetupNetworkType();
 
-
-void interpretSetupIp(Buttons key);
 void displaySetupIp();
+void interpretSetupIp(Buttons key);
 void saveSetupIp();
 
 bool getIsDHCP();

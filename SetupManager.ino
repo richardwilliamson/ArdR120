@@ -45,11 +45,18 @@ void interpretSetupCmd(Buttons key)
   {
     switch (setupMode)
     {
+      case SETUP_MODE_INFO:
+        interpretSetupInfo(key);
+        break;
       case SETUP_MODE_USER:
         interpretSetupUser(key);
         break;
+      case SETUP_MODE_NETWORK_TYPE:
+        interpretSetupNetworkType(key);
+        break;
       case SETUP_MODE_DEV_IP:
       case SETUP_MODE_DEV_SUBNET:
+      case SETUP_MODE_DEV_GATEWAY:
       case SETUP_MODE_CONSOLE_IP:
         //send all to same
         interpretSetupIp(key);
@@ -79,19 +86,19 @@ void interpretSetupCmd(Buttons key)
   switch (key)
   {
     case BTN_1:
+      setupMode = SETUP_MODE_INFO;
+      updateScreenSetup = true;
+      break;
+    case BTN_2:   
       setupMode = SETUP_MODE_USER;
       updateScreenSetup = true;
       break;
-    case BTN_2:
-      setupMode = SETUP_MODE_DEV_IP;
-      updateScreenSetup = true;
-      break;
     case BTN_3:
-      setupMode = SETUP_MODE_DEV_SUBNET;
+      setupMode = SETUP_MODE_CONSOLE_IP;
       updateScreenSetup = true;
       break;
     case BTN_4:
-      setupMode = SETUP_MODE_CONSOLE_IP;
+      setupMode = SETUP_MODE_NETWORK_TYPE;
       updateScreenSetup = true;
       break;
     case BTN_5:
@@ -122,10 +129,17 @@ void displaySetup()
 
   //line 1: SETUP -
   Serial.print("SETUP-RDIM=EXIT");
+  SND_NEW_LINE;
   switch (setupMode)
   {
+    case SETUP_MODE_INFO:
+      displaySetupInfo();
+      break;
     case SETUP_MODE_USER:
       displaySetupUser();
+      break;
+    case SETUP_MODE_NETWORK_TYPE:
+      displaySetupNetworkType();
       break;
     case SETUP_MODE_DEV_IP:
     case SETUP_MODE_DEV_SUBNET:
@@ -150,6 +164,49 @@ void exitSetup()
 {
   setupMode = SETUP_MODE_NONE;
   EosOscManager::getInstance()->setScreenNeedsUpdate(true);
+}
+
+void displaySetupInfo()
+{
+  currentBufferLength = 3;
+  switch (cursorPosition)
+  {
+     case 0:
+        //Wifi network and whether connected
+        Serial.print("SSID: ");
+        Serial.print(WiFi.SSID());
+        SND_NEW_LINE;
+        if (WiFi.status()==WL_CONNECTED)
+           Serial.print("connected");
+        else
+           Serial.print("not connected");
+        break;
+     case 1:
+        //console IP and user
+        Serial.print("user: "); //6 chars
+        Serial.print(EosOscManager::getInstance()->getUser()); //<=3 = <=9
+        SND_NEW_LINE;
+        Serial.print("C:");
+        Serial.print(consoleIP);
+        break;
+     case 2:
+        //device IP and network type 
+        if (getIsDHCP())
+          Serial.print("DHCP ");
+        else 
+          Serial.print("Static IP:");
+        SND_NEW_LINE;
+
+        Serial.print(WiFi.localIP());
+        break;
+  }
+  
+}
+
+void interpretSetupInfo(Buttons key)
+{
+   if (doCursorChange(key))
+      updateScreenSetup = true;
 }
 
 void displaySetupUser()

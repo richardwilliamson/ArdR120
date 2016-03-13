@@ -6,16 +6,23 @@
 byte setupMode = 0;
 #define SETUP_MODE_AWAIT_SELECTION 255
 #define SETUP_MODE_NONE 0
-#define SETUP_MODE_USER 1
-#define SETUP_MODE_DEV_IP 2
-#define SETUP_MODE_DEV_SUBNET 3
-#define SETUP_MODE_CONSOLE_IP 4
-#define SETUP_MODE_WIFI_SSID 5
-#define SETUP_MODE_WIFI_PASS 6
-#define SETUP_MODE_ACCESSPOINT 7
-#define SETUP_MODE_DEV_GATEWAY 8
 
-#define SETUP_MODE_UPLOAD 9
+#define SETUP_MODE_INFO 1
+
+#define SETUP_MODE_USER 2
+#define SETUP_MODE_CONSOLE_IP 3
+
+#define SETUP_MODE_NETWORK_TYPE 4
+#define SETUP_MODE_DEV_IP 5
+#define SETUP_MODE_DEV_SUBNET 6
+#define SETUP_MODE_DEV_GATEWAY 7
+
+#define SETUP_MODE_WIFI_SSID 8
+#define SETUP_MODE_WIFI_PASS 9
+
+#define SETUP_MODE_ACCESSPOINT 10
+
+#define SETUP_MODE_UPLOAD 11
 
 #define SETUP_STORE_VERSION 0 //17 bytes
 
@@ -40,6 +47,9 @@ bool getASCIIFromKey(Buttons key);
 void getLetterFromKey(byte number, Buttons key);
 
 void pad(char * str, byte len);
+
+void displaySetupInfo();
+void interpretSetupInfo(Buttons key);
 
 void interpretSetupUser(Buttons key);
 void displaySetupUser();

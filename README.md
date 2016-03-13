@@ -52,22 +52,23 @@ The are accepted:
 
 #Setup
 
-(NOT YET WORKING)
 
-Setup commands are accessed by pressing [@ATT] - [@ATT] (press it twice), followed by the option below, press [Rem Dim] at any time while in setup to exit without saving
+Setup commands are accessed by pressing [@ATT]  [@ATT] (press @ATT twice), followed by the option below, press [Rem Dim] at any time while in setup to exit without saving
 
 Press [*] to confirm settings
 [up] and [down] will move left/right where applicable
 
-[@ATT] [1] = Set user (0 > 254), 0 will revert to the connected console's user (meaning commands will appear on that console's command line and vice-versa
+CHANGED THE BELOW....
 
-[@ATT] [2] = Set device IP, [Clr] will revert to DHCP, use [.] as applicable for segments
+[1] = Display current settings of device, cursor up/down to scroll through (NOT YET IMPLEMENTED) 
 
-[@ATT] [3] = Set device subnet (not available if IP set to DHCP), [CLR] will revert to 255.255.255.0
+[2] = Set console user (0 > 254), 0 will revert to the connected console's user (meaning commands will appear on that console's command line and vice-versa
 
-[@ATT] [4] = Set Console IP
+[3] = Set console IP (in future implement OpenSLP so you can discver the console on the network..)
 
-[@ATT] [5] = Select Wifi network (use up and down to cycle through), pressing [*] will take you to the password entry. 
+[4] = Select DHCP/static IP, if Static you will be prompted for subnet mask and gateway
+
+[5] = Select Wifi network (use up and down to cycle through), pressing [*] will take you to the password entry. 
 
 1, A, B, C, a, b, c
 
@@ -91,10 +92,10 @@ Press [*] to confirm settings
 
 . special chars
 
-[@ATT] [6] enable remote setup - the device will turn into a Wireless Access Point named "ArdR120-xxx" with the password "1234" - navigate to 192.168.1.4 in your browser
+[6] enable remote setup - the device will turn into a Wireless Access Point named "ArdR120-xxx" with the password "1234" - navigate to 192.168.1.4 in your browser
 
 
-[@ATT] [9] = Enter bootloader mode (needs arduino IDE for now)
+[9] = Enter bootloader mode (needs arduino IDE for now) - TODO enable web upload somehow.. Maybe through Wifi Manager
 
 
 

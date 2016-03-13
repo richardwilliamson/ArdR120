@@ -15,13 +15,11 @@
 
 int status = WL_IDLE_STATUS;
 
-//const char* pass = "9315634916";       // your network password
-
 void setup() {
   
   //consoleIP = IPAddress(192,168,1,9);
   //updateEEPROMConsoleIP();
-
+//
 //    staticIP = IPAddress(192,168,1,200);
 //     IPAddress subnet(255,255,255,0);
 //     IPAddress gateway(192,168,1,1);
@@ -45,6 +43,10 @@ void setup() {
      IPAddress subnet;
      IPAddress gateway;
      readEEPROMIP(gateway, subnet);
+     DEBUG_PRINT("gateway/subnet");
+     DEBUG_PRINT(gateway);
+     DEBUG_PRINT(subnet);
+     DEBUG_DELAY;
      WiFi.config(staticIP, gateway, subnet);
      DEBUG_PRINT(staticIP);
   } //otherwise we are DHCP so don't need to call config..

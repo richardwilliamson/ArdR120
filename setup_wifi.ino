@@ -3,6 +3,8 @@
 #include <WiFiManager.h>
 
 
+IPAddress subnetIP; //used for temp holding of info
+
 void connectWifi()
 {
   byte tries = 0;
@@ -40,20 +42,21 @@ bool getIsDHCP()
       EEPROM.end();
       DEBUG_PRINT("static is:");
       DEBUG_PRINT(staticIP);
+      DEBUG_DELAY;
       haveReadIP=true;
   }
   DEBUG_PRINT("DONE DAT");
   return (staticIP[0]==0);
   
 }
-
-//*********** ON DEVICE WIFI/IP CONFIG ***************
+//***************************************************************************
+//*********** ON DEVICE WIFI/IP CONFIG **************************************
+//***************************************************************************
 
 void displaySetupWifi()
 {
   Serial.print("Select Wifi Network");
   SND_NEW_LINE;
-
 
   if (currentBufferLength == 0)
   {
@@ -108,8 +111,8 @@ void saveSetupWifi()
   } else
   {
     Serial.print("open network");
-
-    //needto save as no password somehow?
+    WiFi.begin(WiFi.SSID(cursorPosition).c_str());
+    delay(1500);
     exitSetup();
   }
 
@@ -203,6 +206,80 @@ void saveSetupWifiPassword()
 
 }
 
+
+void displaySetupNetworkType()
+{
+  //prompt for type DHCP or static IP
+  if (currentBufferLength!=2)
+  { //set to 2 now we have initialised - this means we scroll the two options..
+    currentBufferLength = 2;
+    cursorPosition = (getIsDHCP())?0:1; //if cursor is 0 we are DHCP, otherwise static
+    if (getIsDHCP())
+      DEBUG_PRINT("DHCP");
+    #ifdef DEBUG
+      delay(1000);
+    #endif
+  }
+
+  Serial.print("Network type:");
+  SND_NEW_LINE;
+  if (cursorPosition==0)
+    Serial.print("DHCP");
+  else
+    Serial.print("Static");
+  
+}
+
+
+void interpretSetupNetworkType(Buttons key)
+{
+  //just allow us to scroll up/down through static and DHCP
+  if (doCursorChange(key))
+  {
+    updateScreenSetup = true;
+    return;
+  }
+  
+  //must have something else!
+  switch (key)
+  {
+    case BTN_ENTER:
+      //DO SAVE
+      //***********
+      saveSetupNetworkType();
+      return;
+      break;
+
+  }
+
+  //have had nothing!!
+}
+
+void saveSetupNetworkType()
+{
+  //if we have selected DHCP then we set the static IP to 0.0.0.0 and save, then restart networking
+  //if not we set our setup mode to static IP, that will then follow through to subnet and gateway
+
+  if (cursorPosition == 0)
+  {
+     //DHCP
+     updateEEPROMDhcpIP();
+      wifi_station_dhcpc_start(); //switches over to DHCP..
+     Serial.write(SND_CLEAR);
+     Serial.print("Network set to DHCP");
+     delay(1500);
+     exitSetup();
+     
+  } else
+  {
+     setupMode = SETUP_MODE_DEV_IP;
+     cursorPosition = 0;
+     currentBufferLength = 0;
+     updateScreenSetup = true;
+  }
+}
+
+
 //*************************************************************
 //***** WEB BASED WIFI SETUP STUFF
 //*************************************************************
@@ -231,7 +308,11 @@ void enableAccessPoint()
    //TODO - the above will be too long for the lines, should we shrink somehow?
    
    WiFiManager wifiManager;
-   //wifiManager.setDebugOutput(false);
+
+   #ifndef debug
+      wifiManager.setDebugOutput(false);
+   #endif
+   
    wifiManager.setConnectTimeout(5); //the time to wait when trying to re-connect Wifi before giving up
 
    if (!getIsDHCP())  //currently have a static IP address..
@@ -239,7 +320,8 @@ void enableAccessPoint()
    
    wifiManager.setForceStaticIPconfig(true); //whether or not we are static we want to display the boxes for it
 
-   WiFiManagerParameter userParm("user", "user or 0", ""+EosOscManager::getInstance()->getUser(), 3);
+   String userString = String(EosOscManager::getInstance()->getUser());
+   WiFiManagerParameter userParm("user", "user or 0", userString.c_str(), 3);
    WiFiManagerParameter consoleParm("console", "console IP", consoleIP.toString().c_str(), 16);
 
    wifiManager.addParameter(&userParm);
@@ -268,6 +350,8 @@ void enableAccessPoint()
        
        IPAddress newOutIP;
        newOutIP.fromString(userParm.getValue()); //error checking??
+       consoleIP = newOutIP;
+       updateEEPROMConsoleIP();
 
        boolean isStatic = wifiManager.getSTAIsStaticIP();
        if (isStatic)
@@ -297,9 +381,9 @@ void enableAccessPoint()
         Serial.print("S"); //prepend the IP with either S for static
       else
         Serial.print("D"); //or D for dynamic
+        
       Serial.print(WiFi.localIP());
     
-
       delay(1000);
       exitSetup();
 
@@ -332,10 +416,12 @@ void readIP(IPAddress &ip, byte storeAddr)
 
 void readEEPROMIP(IPAddress &gateway, IPAddress &subnet)
 {
-    if (getIsDHCP()) //only read info if we are not DHCP..
+    if (!getIsDHCP()) //only read info if we are not DHCP..
     {
+        EEPROM.begin(512);
         readIP(gateway, SETUP_STORE_GATEWAY);
-        readIP(subnet, SETUP_STORE_SUBNET);   
+        readIP(subnet, SETUP_STORE_SUBNET); 
+        EEPROM.end();  
     }
 }
 
@@ -431,21 +517,23 @@ void displaySetupIp()
   }
   SND_NEW_LINE;
 
-  if (strlen(inputBuffer) == 0) //if nothing in the buffer convert the current relevant IP to buffer
+  if (currentBufferLength == 0 || strlen(inputBuffer)==0) //if nothing in the buffer convert the current relevant IP to buffer
   {
+    currentBufferLength = 15;
+    inputBuffer[0] = '\0';
     IPAddress ip;
     switch (setupMode)
     {
         case SETUP_MODE_CONSOLE_IP:
           ip = consoleIP;
           break;
-        case SETUP_MODE_DEVICE_IP:
+        case SETUP_MODE_DEV_IP:
           ip = WiFi.localIP();
           break;
-        case SETUP_MODE_DEVICE_SUBNET:
+        case SETUP_MODE_DEV_SUBNET:
           ip = WiFi.subnetMask();
           break;
-        case SETUP_MODE_DEVICE_GATEWAY:
+        case SETUP_MODE_DEV_GATEWAY:
           ip = WiFi.gatewayIP();
           break;
     }
@@ -484,7 +572,7 @@ void saveSetupIp()
     {
       int number = atoi(pch);
 
-      if (number < 254 && number > 0)
+      if ((setupMode==SETUP_MODE_DEV_SUBNET) || (number < 254 && number > 0))
       {
         //ok for now
         if (i == 0 && number == 0)
@@ -516,31 +604,45 @@ void saveSetupIp()
   {
     //good to save
     IPAddress ip = (IPAddress)res;
-    EEPROM.begin(512);
+
     switch (setupMode)
     {
         case SETUP_MODE_CONSOLE_IP:
           consoleIP = res;
-          updateIP(consoleIP, SETUP_STORE_CONSOLE_IP);
+          updateEEPROMConsoleIP();
           Serial.print("console IP changd");
+          SND_NEW_LINE;
+          Serial.print(consoleIP);
           break;
-        case SETUP_MODE_DEVICE_IP:
+        case SETUP_MODE_DEV_IP:
           staticIP = res;
-          Serial.print("static IP changd");
+          setupMode = SETUP_MODE_DEV_SUBNET; //so subnet next
+          currentBufferLength = 0;
+          cursorPosition = 0;
+          updateScreenSetup = true;
+          return;
           break;
-        case SETUP_MODE_DEVICE_SUBNET:
-          subnetIP = res;
-          Serial.print("subnet changd");
+        case SETUP_MODE_DEV_SUBNET:
+          subnetIP = res; //temp store it..
+          setupMode = SETUP_MODE_DEV_GATEWAY;
+          currentBufferLength = 0;
+          cursorPosition = 0;
+          updateScreenSetup=true;
+          return;
           break;
-        case SETUP_MODE_DEVICE_GATEWAY:
-          gatewayIP = res;
-          Serial.print("gateway IP changd");
+        case SETUP_MODE_DEV_GATEWAY:
+          updateEEPROMStaticIP(res, subnetIP);
+          WiFi.config(staticIP, res, subnetIP);
+          Serial.print("static IP set");
+          SND_NEW_LINE;
+          Serial.print(staticIP);
+          SND_NEW_LINE;
+          Serial.print(subnetIP);
           break;
     }
     //hmmm
 
-    EEPROM.commit();
-    EEPROM.end();
+
     //TODO restart networking and save changes to flash
     delay(1500);
     exitSetup();
