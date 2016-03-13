@@ -133,7 +133,7 @@ boolean doConnect(bool verbose)
     delay(10);
     client.connect(consoleIP, 3032); //should we do any kind of timeout??
     tries++;
-    if (tries > 10) 
+    if (tries > 2) 
       break;
     
   }

@@ -264,7 +264,7 @@ void saveSetupNetworkType()
   {
      //DHCP
      updateEEPROMDhcpIP();
-      wifi_station_dhcpc_start(); //switches over to DHCP..
+     wifi_station_dhcpc_start(); //switches over to DHCP..
      Serial.write(SND_CLEAR);
      Serial.print("Network set to DHCP");
      delay(1500);
@@ -294,9 +294,9 @@ void saveConfigCallback () {
 void enableAccessPoint()
 {
    doSave = false;
-   
-   const char* ssid = "ArdR120-xxxx";
-   const char* pass = "123456";
+   String ssidS = + "ArdR120-"+String(ESP.getChipId());
+   const char* ssid = ssidS.c_str();
+   const char* pass = "12345678";
    Serial.write(SND_CLEAR);
    Serial.print("Access point started");
    SND_NEW_LINE;
@@ -319,6 +319,7 @@ void enableAccessPoint()
         wifiManager.setSTAStaticIPConfig(WiFi.localIP(), WiFi.gatewayIP(), WiFi.subnetMask());
    
    wifiManager.setForceStaticIPconfig(true); //whether or not we are static we want to display the boxes for it
+   wifiManager.setDisplayExistingCreds(true); //pre-populates the boxes with the current network info..
 
    String userString = String(EosOscManager::getInstance()->getUser());
    WiFiManagerParameter userParm("user", "user or 0", userString.c_str(), 3);
@@ -349,7 +350,7 @@ void enableAccessPoint()
        }
        
        IPAddress newOutIP;
-       newOutIP.fromString(userParm.getValue()); //error checking??
+       newOutIP.fromString(consoleParm.getValue()); //error checking??
        consoleIP = newOutIP;
        updateEEPROMConsoleIP();
 
