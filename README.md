@@ -1,16 +1,16 @@
 # ArdR120
-Arduino project to allow a Strand R120 remote to work with Eos over TCP using the ESP8266 chip - developement done using an Adafruit Huzzah board with a Max232 chip to shift the serial data to RS232 levels
+Arduino project to allow a Strand R120 remote to work with Eos over TCP using the ESP8266 chip - developement done using an Adafruit Huzzah board with a Max232 chip to shift the serial data to RS232 levels - PCB design is in the PCB folder
 
-Specifically targetted to work with the Stage Electrics version of the R120 which has fewer buttons and a smaller display, but is a much nicer box 
+Specifically targetted to work with the Stage Electrics version of the R120 which has fewer buttons and a smaller display, but is a much nicer box, so all the features can be accessed with the reduced number of buttons 
 
 # User
-The remote can be configures to send commands either as the connnected console's own user, or a specified user
+The remote can be configured to send commands either as the connnected console's own user, or a specified user. Note that a limitation of the EOS OSC API currently means that all OSC devices share a user - which is a pain!
 
 # Shift keys
 
 @Att button is effectively shift, but has different behaviour to the shift button on the console in order to leverage additonal remote functionality
 
-The are accepted:
+The following commands are accepted:
 
 [@ATT][Clr] = clear command line
 
@@ -60,7 +60,7 @@ Press [*] to confirm settings
 
 CHANGED THE BELOW....
 
-[1] = Display current settings of device, cursor up/down to scroll through (NOT YET IMPLEMENTED) 
+[1] = Display current settings of device, cursor up/down to scroll through 
 
 [2] = Set console user (0 > 254), 0 will revert to the connected console's user (meaning commands will appear on that console's command line and vice-versa
 
@@ -88,11 +88,11 @@ CHANGED THE BELOW....
 
 9, Y, Z, y, z
 
-0, 
+0, (TO BE CHECKED)
 
-. special chars
+. special chars (NOT YET WORKING)
 
-[6] enable remote setup - the device will turn into a Wireless Access Point named "ArdR120-xxx" with the password "1234" - navigate to 192.168.1.4 in your browser
+[6] enable remote setup - the device will turn into a Wireless Access Point named "ArdR120-xxx" with the password "123456" - navigate to 192.168.1.4 in your browser - note that currently the network is appearing with no password for some reason - to be investigated!
 
 
 [9] = Enter bootloader mode (needs arduino IDE for now) - TODO enable web upload somehow.. Maybe through Wifi Manager
@@ -103,13 +103,11 @@ CHANGED THE BELOW....
 
 - No / key so can't set addresses on other universes - maybe use . somehow?
 
-- Need to make users work
-
-- Need to make all network settings configurable
-
 - Need to tidy up how screen displays information
 
-- When recalling macros command line on remote doesn't show that you are typing a macro (as it doesn't appear on console command line)
+- When recalling macros command line on remote doesn't show that you are typing a macro (as it doesn't appear on console command line), maybe replace top line with this sort of thing, could also display the SHIFT mode, and the below stop/go stuff..
 
 - Similarly STOPBACK and GO don't display - maybe need a mechanism to show "special" messages for a short duration
+- 
+- special chars not yet working in on device wifi config..
 
