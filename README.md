@@ -101,13 +101,19 @@ CHANGED THE BELOW....
 
 #current problems/TODO
 
-- No / key so can't set addresses on other universes - maybe use . somehow?
+No / key so can't set addresses on other universes - maybe use . somehow?
 
-- Need to tidy up how screen displays information
+Need to tidy up how screen displays information
 
-- When recalling macros command line on remote doesn't show that you are typing a macro (as it doesn't appear on console command line), maybe replace top line with this sort of thing, could also display the SHIFT mode, and the below stop/go stuff..
+When recalling macros command line on remote doesn't show that you are typing a macro (as it doesn't appear on console command line), maybe replace top line with this sort of thing, could also display the SHIFT mode, and the below stop/go stuff..
 
-- Similarly STOPBACK and GO don't display - maybe need a mechanism to show "special" messages for a short duration
-- 
-- special chars not yet working in on device wifi config..
+Similarly STOPBACK and GO don't display - maybe need a mechanism to show "special" messages for a short duration
+
+special chars not yet working in on device wifi config..
+
+Check that user saves/loads properly everywhere
+
+An interrupt in the wifiManager so that if you press a key on the remote wifiManager will quit..
+
+Check what happens if things don't connect, and that device can recover OK from all problems..
 
