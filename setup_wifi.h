@@ -1,9 +1,21 @@
 #ifndef SETUP_WIFI_h
 #define SETUP_WIFI_h
 
+#include <WiFiManager.h>
+
 IPAddress staticIP(0,0,0,0);
 
 IPAddress consoleIP; //IP of console
+
+WiFiManager wifiManager;
+
+void setupWifiManager();
+void updateValuesCallback(WiFiManager *manager);
+void saveConfigCallback ();
+void apSetupCallback (WiFiManager *manager);
+void wifiLoopCallback(WiFiManager *manager);
+
+
 
 void interpretSetupWifi(Buttons key);
 void displaySetupWifi();

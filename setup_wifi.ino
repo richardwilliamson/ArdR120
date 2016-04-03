@@ -283,60 +283,69 @@ void saveSetupNetworkType()
 //*************************************************************
 //***** WEB BASED WIFI SETUP STUFF
 //*************************************************************
-bool doSave;
 
-//this simply gets called by WiFiManager, and indicated that settings need to be stored..
-void saveConfigCallback () {
-  doSave = true;
-}
 
-//start up as an access point
-void enableAccessPoint()
+WiFiManagerParameter userParm("user", "user or 0", "", 4);
+WiFiManagerParameter consoleParm("console", "console IP", "", 17);
+
+void setupWifiManager()
 {
-   doSave = false;
-   String ssidS = + "ArdR120-"+String(ESP.getChipId());
-   const char* ssid = ssidS.c_str();
-   const char* pass = "12345678";
-   Serial.write(SND_CLEAR);
-   Serial.print("Access point started");
-   SND_NEW_LINE;
-   Serial.print("SSID: ");
-   Serial.print(ssid);
-   SND_NEW_LINE;
-   Serial.print("PASS: ");
-   Serial.print(pass);
-   //TODO - the above will be too long for the lines, should we shrink somehow?
    
-   WiFiManager wifiManager;
-
    #ifndef debug
       wifiManager.setDebugOutput(false);
    #endif
    
    wifiManager.setConnectTimeout(5); //the time to wait when trying to re-connect Wifi before giving up
-
-   if (!getIsDHCP())  //currently have a static IP address..
-        wifiManager.setSTAStaticIPConfig(WiFi.localIP(), WiFi.gatewayIP(), WiFi.subnetMask());
    
    wifiManager.setForceStaticIPconfig(true); //whether or not we are static we want to display the boxes for it
    wifiManager.setDisplayExistingCreds(true); //pre-populates the boxes with the current network info..
-
-   String userString = String(EosOscManager::getInstance()->getUser());
-   WiFiManagerParameter userParm("user", "user or 0", userString.c_str(), 3);
-   WiFiManagerParameter consoleParm("console", "console IP", consoleIP.toString().c_str(), 16);
+   wifiManager.setDisplayUploadOption(true); //allows the user to upload new firmware over web
 
    wifiManager.addParameter(&userParm);
    wifiManager.addParameter(&consoleParm);
 
-   wifiManager.setForceSaveOnDone(true);  //save all the settings and exit whether it works or not!
-
+   wifiManager.setDisplaySettingsPageCallback(updateValuesCallback);
    wifiManager.setSaveConfigCallback(saveConfigCallback); //will set the doSave flag to true so we know to save changed
-   
-   wifiManager.startConfigPortal(ssid, pass); //this starts the portal then blocks until done - when done it tries to connect and returns true if connected
+   wifiManager.setLoopCallback(wifiLoopCallback);
 
-   if (doSave)
-   {
-       //save the relevant information
+  
+}
+
+void wifiLoopCallback(WiFiManager *manager)
+{
+     Buttons key = getKeyPress();
+
+     if (key==BTN_REM_DIM)
+        wifiManager.setTimeout(1); //close the portal
+
+}
+void apSetupCallback (WiFiManager *manager)
+{
+    if (!getIsDHCP())  //currently have a static IP address..
+        wifiManager.setSTAStaticIPConfig(WiFi.localIP(), WiFi.gatewayIP(), WiFi.subnetMask());
+    else
+        wifiManager.setSTAStaticIPConfig();
+}
+
+//this is called before the settings page is displayed so we can update everything that needs updating..
+void updateValuesCallback(WiFiManager *manager)
+{
+
+
+    String userString = String(EosOscManager::getInstance()->getUser());
+    userParm.setDefaultValue(userString.c_str());
+    consoleParm.setDefaultValue(consoleIP.toString().c_str());
+
+    //hmm, this is called twice, which isn't perfect. 
+    if (!getIsDHCP())  //currently have a static IP address..
+        wifiManager.setSTAStaticIPConfig(WiFi.localIP(), WiFi.gatewayIP(), WiFi.subnetMask());
+    else
+        wifiManager.setSTAStaticIPConfig();
+}
+
+//this simply gets called by WiFiManager, and indicated that settings need to be stored..
+void saveConfigCallback () {
+   //save the relevant information
        //change the relevant bits
        //note that SSID and Password are stored by the device so we don't store those
 
@@ -368,10 +377,28 @@ void enableAccessPoint()
             updateEEPROMDhcpIP();
        }
        
-   } else
-   {
-      //ideally restore back to old settings?
-   }
+}
+
+//start up as an access point
+void enableAccessPoint()
+{
+   String ssidS = + "ArdR120-"+String(ESP.getChipId());
+   const char* ssid = ssidS.c_str();
+   const char* pass = "12345678";
+   Serial.write(SND_CLEAR);
+   Serial.print("Access point started");
+   SND_NEW_LINE;
+   Serial.print("SSID: ");
+   Serial.print(ssid);
+   SND_NEW_LINE;
+   Serial.print("PASS: ");
+   Serial.print(pass);
+   //TODO - the above will be too long for the lines, should we shrink somehow?
+   
+   wifiManager.setTimeout(0); //in case this was set to something else before..
+
+   wifiManager.startConfigPortal(ssid, pass); //this starts the portal then blocks until done - when done it tries to connect and returns true if connected
+
    if (WiFi.status()==WL_CONNECTED){
       Serial.write(SND_CLEAR);
       Serial.print("Connected to:");

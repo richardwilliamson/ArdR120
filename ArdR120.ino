@@ -4,12 +4,13 @@
 //Pin 6: RX (data to base/handheld) - wires to XLR male pin 5 > pink
 //Pin 7: TX (data from base/handheld) - wires to XLR male > GREEN
 
-//#define DEBUG
+#define DEBUG
 
 #include "ArdR120.h"
 
 #include "SetupManager.h"
 #include "setup_wifi.h"
+
 
 //#include <EEPROM.h>
 
@@ -36,9 +37,13 @@ void setup() {
   //WiFi.begin("richard", "appleapple"); 
   WiFi.begin(); 
 
+  setupWifiManager();
+
+
   if (!getIsDHCP())
   {  
      DEBUG_PRINT("Static");
+     DEBUG_DELAY;
      //only read this if we are static
      IPAddress subnet;
      IPAddress gateway;
@@ -50,6 +55,11 @@ void setup() {
      WiFi.config(staticIP, gateway, subnet);
      DEBUG_PRINT(staticIP);
   } //otherwise we are DHCP so don't need to call config..
+  else
+  {
+    DEBUG_PRINT("DHCP");
+    DEBUG_DELAY;
+  }
 
   readEEPROMConsoleIP();
   //TODO - if we don't have a console IP we should prompt for one..
@@ -76,6 +86,7 @@ void setup() {
   }
 
   EosOscManager::getInstance()->resetConnection();
+
 
   delay(1000); //display message for a second before then trying to update screen
 
