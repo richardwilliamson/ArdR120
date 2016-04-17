@@ -45,6 +45,8 @@ WiFiClient client;
 
 //note buttons go top down on R120 (stage electrics is different)
 //first button is actually 48
+
+#define BTN_RESET 0
 #define BUTTON_OFFSET 47
 
 enum Buttons {

@@ -8,6 +8,7 @@ IPAddress subnetIP; //used for temp holding of info
 void connectWifi()
 {
   byte tries = 0;
+ // WiFi.config(IPAddress(192,168,1,10), IPAddress(192,168,1,1), IPAddress(255,255,255,0));
   while (WiFi.waitForConnectResult() != WL_CONNECTED) {
     delay(10);
     tries++;
@@ -34,18 +35,18 @@ bool getIsDHCP()
   //should check if we have read in IP addresses
   //if not read them in
   //if we have return the result
-  DEBUG_PRINT("start to read");
   if (!haveReadIP)
   {
       EEPROM.begin(512);
       readIP(staticIP, SETUP_STORE_IP);
+      if (staticIP[0]==255)
+        staticIP = IPAddress(0,0,0,0); //something wrong..
       EEPROM.end();
       DEBUG_PRINT("static is:");
       DEBUG_PRINT(staticIP);
       DEBUG_DELAY;
       haveReadIP=true;
   }
-  DEBUG_PRINT("DONE DAT");
   return (staticIP[0]==0);
   
 }
@@ -684,4 +685,47 @@ void saveSetupIp()
 
 }
 
+
+//-------------------------------------------------
+//-------Server stuff-----------------------------
+
+
+void displaySetupServer()
+{
+    SND_CLEAR;
+
+    if (wifiManager.getAlwaysOnIsOn())
+    {
+        Serial.println("Server running on");
+        Serial.println(WiFi.localIP());
+        Serial.println("Press 2 to disable");
+    } else
+    {
+        Serial.println("Server not running");
+        Serial.println("Press 1 to enable");
+    }
+ 
+}
+
+void interpretSetupServer(Buttons key)
+{
+    if (key==BTN_1)
+    { //enable
+        wifiManager.setAlwaysOnIsOn(true);
+        SND_CLEAR;
+        Serial.println("Server started on");
+        Serial.println(WiFi.localIP());
+
+        delay(1500);
+
+        exitSetup();
+    } else if (key==BTN_2)
+    { //disable
+        wifiManager.setAlwaysOnIsOn(false);
+        SND_CLEAR;
+        Serial.println("Server stopped");
+        delay(1500);
+        exitSetup();
+    }
+}
 

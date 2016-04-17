@@ -52,6 +52,8 @@ void saveSetupIp();
 bool getIsDHCP();
 
 
+void displaySetupServer();
+void interpretSetupServer(Buttons key);
 
 
 

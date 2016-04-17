@@ -11,6 +11,8 @@
 #include "SetupManager.h"
 #include "setup_wifi.h"
 
+#include <EEPROM.h>
+
 
 //#include <EEPROM.h>
 
@@ -26,7 +28,7 @@ void setup() {
 //     IPAddress gateway(192,168,1,1);
 //     updateEEPROMStaticIP(gateway, subnet);
   
-  
+  pinMode(BTN_RESET, INPUT);
   Serial.begin(9600);
   delay(100); //wait for the thing to go alive!
 
@@ -111,7 +113,7 @@ boolean doConnect(bool verbose)
     Serial.print("@ATT auto config, REMDIM man confi, or retry");
     while(1) //wait for input and either go to config or retry
     {
-      yield();
+        yield();
         Buttons key = getKeyPress();
         if (key==BTN_ATT)
         { //go to config
@@ -142,6 +144,8 @@ boolean doConnect(bool verbose)
   while (!client.connected())
   {
     delay(10);
+    if (consoleIP[0]==0 || consoleIP[0]==255)
+      break; //IP is invalid
     client.connect(consoleIP, 3032); //should we do any kind of timeout??
     tries++;
     if (tries > 2) 
@@ -158,7 +162,7 @@ boolean doConnect(bool verbose)
     Serial.print("@ATT configure, any key retry");
     while(1) //wait for input and either go to config or retry
     {
-      yield();
+        yield();
         Buttons key = getKeyPress();
         if (key==BTN_ATT)
         { //go to config
@@ -211,6 +215,30 @@ Buttons getKeyPress()
 }
 
 void loop() {
+
+  long startDown = millis();
+  while (digitalRead(BTN_RESET)==LOW)
+  {
+    if (millis()-startDown > 2000)
+    {
+         //time to reset everything
+         WiFi.disconnect(); //resets the persistant stuff
+
+         EEPROM.begin(512);
+         for (int i=0; i<512; i++)
+            EEPROM.write(i, 0);
+
+         EEPROM.commit();
+         EEPROM.end();
+
+         ESP.reset();
+         
+    }
+
+  }
+
+  wifiManager.runLoop(); //this checks if it should do anything but doesn't block..
+    
   // put your main code here, to run repeatedly:
   if (setupMode != SETUP_MODE_NONE)
   { //if in setup mode loop elsewhere
@@ -229,6 +257,8 @@ void loop() {
   {
     //return
     //TODO - should listen out for a button press to enter setup?
+    DEBUG_PRINT("not connected");
+    DEBUG_DELAY;
     return;
   }
 //  boolean connected 

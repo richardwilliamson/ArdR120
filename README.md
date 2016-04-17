@@ -52,6 +52,7 @@ The following commands are accepted:
 
 #Setup
 
+Press and hold the ESP's on board button (pin 0) for 2 seconds to do a full factory reset, note that once restarted you will be in bootloader mode, so press the reset button to run normally
 
 Setup commands are accessed by pressing [@ATT]  [@ATT] (press @ATT twice), followed by the option below, press [Rem Dim] at any time while in setup to exit without saving
 
@@ -92,10 +93,11 @@ CHANGED THE BELOW....
 
 . special chars (NOT YET WORKING)
 
-[6] enable remote setup - the device will turn into a Wireless Access Point named "ArdR120-xxx" with the password "123456" - navigate to 192.168.1.4 in your browser - note that currently the network is appearing with no password for some reason - to be investigated!
+[6] enable remote setup - the device will turn into a Wireless Access Point named "ArdR120-xxx" with the password "12345678" - navigate to 192.168.4.1 in your browser. The AP will run until saved - alternatively you can press REMDIM on the remote and the AP will quit and device restart..
 
+[7] enable webserver - this allows you to configure the device by typing the IP address into a browser on a device on the same wireless network. 1=ON, 2=OFF
 
-[9] = Enter bootloader mode (needs arduino IDE for now) - TODO enable web upload somehow.. Maybe through Wifi Manager
+[9] = Enter bootloader mode (needs arduino IDE for now) - TODO enable web upload somehow.. Maybe through Wifi Manager, this is for 'engineer' use only and will probably eventually be removed..
 
 
 

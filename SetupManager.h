@@ -24,6 +24,8 @@ byte setupMode = 0;
 
 #define SETUP_MODE_UPLOAD 11
 
+#define SETUP_MODE_ENABLE_SERVER 12
+
 #define SETUP_STORE_VERSION 0 //17 bytes
 
 #define SETUP_STORE_USER 17 //1 byte
@@ -56,9 +58,6 @@ void displaySetupUser();
 void saveSetupUser();
 byte readUserEEPROM();
 void writeUserEEPROM(byte user);
-
-
-
 
 
 #endif

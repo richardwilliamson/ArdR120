@@ -67,6 +67,9 @@ void interpretSetupCmd(Buttons key)
       case SETUP_MODE_WIFI_PASS:
         interpretSetupWifiPassword(key);
         break;
+      case SETUP_MODE_ENABLE_SERVER:
+        interpretSetupServer(key);
+        break;
     }
     return;
   }
@@ -107,6 +110,10 @@ void interpretSetupCmd(Buttons key)
       break;
     case BTN_6:
       setupMode = SETUP_MODE_ACCESSPOINT;
+      updateScreenSetup = true;
+      break;
+    case BTN_7:
+      setupMode = SETUP_MODE_ENABLE_SERVER;
       updateScreenSetup = true;
       break;
     case BTN_9:
@@ -154,9 +161,11 @@ void displaySetup()
       displaySetupWifiPassword();
       break;
     case SETUP_MODE_ACCESSPOINT:
-      enableAccessPoint();
+      enableAccessPoint(); 
       break;
-      
+    case SETUP_MODE_ENABLE_SERVER:
+      displaySetupServer();
+      break;
   }
 }
 
@@ -573,6 +582,8 @@ void getLetterFromKey(byte number, Buttons key) //number should be the number we
 
   checkCursor();
 }
+
+
 
 
 
