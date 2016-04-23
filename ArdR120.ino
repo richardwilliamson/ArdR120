@@ -421,10 +421,8 @@ void interpretCmd(Buttons key)
       oscCommand.sendCommand("Group");
       break;
     case BTN_GO:
-      {
         oscCommand.sendKey("go");
         break;
-      }
     case BTN_STOP_BACK:
       oscCommand.sendKey("stopback");
       break;
@@ -432,15 +430,11 @@ void interpretCmd(Buttons key)
       oscCommand.sendCommand("Rem_Dim");
       break;
     case BTN_FULL:
-      {
-        oscCommand.sendCommand("Full");
-        break;
-      }
+      oscCommand.sendCommand("Full");
+      break;
     case BTN_ON:
-      {
         oscCommand.sendCommand("Level");
         break;
-      }
     case BTN_REC:
       oscCommand.sendCommand("Record");
       break;
@@ -458,6 +452,15 @@ void interpretCmd(Buttons key)
       break;
     case BTN_DOWN:
       oscCommand.sendKey("-%");
+      break;
+    case BTN_SUB:
+      oscCommand.sendKey("sub");
+      break;
+    case BTN_DIM:
+      oscCommand.sendKey("address");
+      break;
+    case BTN_TIME:
+      oscCommand.sendKey("time");
       break;
     default:
       {
@@ -518,6 +521,9 @@ void interpretAtAtCmd(Buttons key)
       break;
     case BTN_PLUS:
       oscCommand.sendCommand("Park");
+      break;
+    case BTN_CUE:
+      oscCommand.sendKey("cueonly");
       break;
     default:
       {

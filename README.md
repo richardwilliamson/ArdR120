@@ -16,6 +16,10 @@ The following commands are accepted:
 
 [@ATT][Go] = go to cue
 
+[@ATT][Cue] = cue only
+
+[@ATT][Rec] = update
+
 [@ATT][0] = sneak
 
 [@ATT][1] = preset
@@ -35,8 +39,6 @@ The following commands are accepted:
 [@ATT][8] = Patch
 
 [@ATT][9] = Park
-
-[@ATT][Rec] = update
 
 [@ATT][@] = Address (for Stage Electrics remotes without a Dim key)
 
