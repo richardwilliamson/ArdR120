@@ -44,6 +44,8 @@ The following commands are accepted:
 
 [@ATT][+] = Park
 
+[@ATT][.] = /
+
 #Differences to labelled buttoned
 
 [ON] equates to eos [Level]
@@ -105,9 +107,7 @@ CHANGED THE BELOW....
 
 #current problems/TODO
 
-No / key so can't set addresses on other universes - maybe use . somehow?
-
-Need to tidy up how screen displays information
+Need to tidy up how screen displays information, and have option for SLX (3 line) or Strand (4? line) remotes 
 
 When recalling macros command line on remote doesn't show that you are typing a macro (as it doesn't appear on console command line), maybe replace top line with this sort of thing, could also display the SHIFT mode, and the below stop/go stuff..
 

@@ -304,22 +304,17 @@ void loop() {
 }
 
 long lastAtAtPress = 0; //used to log the last time AtAt was pressed
-int atAtTimeout = 1000; //millis that we will wait for AtAt to be pressed
 
 void interpretCmd(Buttons key)
 {
 
   if (lastAtAtPress > 0)
-    if (millis() - lastAtAtPress  < atAtTimeout)
-    { //we are in AtAtMode
+  {
       interpretAtAtCmd(key);  //interpret it
       lastAtAtPress = 0;  //reset the counter
       return; //don't do anything else
-    } else
-    {
-      lastAtAtPress = 0;
-
-    }
+      //TODO - need to somehow delete the SHIFT
+   } 
 
   //key = (buttons)((int)key - BUTTON_OFFSET);
   switch (key)
@@ -462,6 +457,9 @@ void interpretCmd(Buttons key)
     case BTN_TIME:
       oscCommand.sendKey("time");
       break;
+    case BTN_DOT:
+      oscCommand.sendCommand(".");
+      break;
     default:
       {
         return; //do nothing with it
@@ -524,6 +522,9 @@ void interpretAtAtCmd(Buttons key)
       break;
     case BTN_CUE:
       oscCommand.sendKey("cueonly");
+      break;
+    case BTN_DOT:
+      oscCommand.sendCommand("/");
       break;
     default:
       {
